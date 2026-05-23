@@ -1,0 +1,1 @@
+cd HYRE_B && npx lint-staged
