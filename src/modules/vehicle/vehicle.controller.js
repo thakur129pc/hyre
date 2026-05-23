@@ -17,14 +17,21 @@ export const addVehicleType = async (req, res, next) => {
     const normalizedTypeName = typeName.toLowerCase().trim();
 
     // Check if vehicle type already exists
-    const existingType = await VehicleType.findOne({ typeName: normalizedTypeName }).session(session);
+    const existingType = await VehicleType.findOne({ typeName: normalizedTypeName }).session(
+      session
+    );
     if (existingType) {
       throw new AppError(`Vehicle type '${typeName}' already exists.`, 400);
     }
 
-    const newType = await VehicleType.create([{
-      typeName: normalizedTypeName,
-    }], { session });
+    const newType = await VehicleType.create(
+      [
+        {
+          typeName: normalizedTypeName,
+        },
+      ],
+      { session }
+    );
 
     await session.commitTransaction();
     session.endSession();
@@ -65,13 +72,21 @@ export const addVehicleSubType = async (req, res, next) => {
       subTypeName: normalizedSubTypeName,
     }).session(session);
     if (existingSubType) {
-      throw new AppError(`Vehicle subtype '${subTypeName}' already exists under this vehicle type.`, 400);
+      throw new AppError(
+        `Vehicle subtype '${subTypeName}' already exists under this vehicle type.`,
+        400
+      );
     }
 
-    const newSubType = await VehicleSubType.create([{
-      subTypeName: normalizedSubTypeName,
-      typeId,
-    }], { session });
+    const newSubType = await VehicleSubType.create(
+      [
+        {
+          subTypeName: normalizedSubTypeName,
+          typeId,
+        },
+      ],
+      { session }
+    );
 
     await session.commitTransaction();
     session.endSession();
@@ -123,7 +138,10 @@ export const addVehicle = async (req, res, next) => {
 
     // Relational Integrity: Verify subtype belongs to the specified vehicle type
     if (vehicleSubType.typeId.toString() !== vehicleTypeId) {
-      throw new AppError('The specified vehicle sub type does not belong to the specified vehicle type.', 400);
+      throw new AppError(
+        'The specified vehicle sub type does not belong to the specified vehicle type.',
+        400
+      );
     }
 
     // Uniqueness: Verify no same vehicle (same vehicleTypeId + vehicleSubTypeId) exists
@@ -132,10 +150,301 @@ export const addVehicle = async (req, res, next) => {
       vehicleSubTypeId,
     }).session(session);
     if (existingVehicle) {
-      throw new AppError('A vehicle catalog entry with this type and subtype combination already exists.', 400);
+      throw new AppError(
+        'A vehicle catalog entry with this type and subtype combination already exists.',
+        400
+      );
     }
 
-    const newVehicle = await Vehicle.create([{
+    const newVehicle = await Vehicle.create(
+      [
+        {
+          vehicleTypeId,
+          vehicleSubTypeId,
+          category,
+          title,
+          description,
+          numberOfWheels,
+          maxPassengerCapacity,
+          iconUrl,
+          vehicleSpecs,
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({
+      status: true,
+      message: 'Vehicle catalog entry added successfully.',
+      data: newVehicle[0],
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
+  }
+};
+
+/**
+ * Fetch All Vehicle Types
+ */
+export const getVehicleTypes = async (req, res, next) => {
+  try {
+    const types = await VehicleType.find().sort({ typeName: 1 });
+    res.status(200).json({
+      status: true,
+      message: 'Vehicle types fetched successfully.',
+      data: types,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Fetch Vehicle Sub Types with respect to Type ID
+ */
+export const getVehicleSubTypes = async (req, res, next) => {
+  try {
+    const { typeId } = req.body;
+
+    const subTypes = await VehicleSubType.find({ typeId }).sort({ subTypeName: 1 });
+    res.status(200).json({
+      status: true,
+      message: 'Vehicle subtypes fetched successfully.',
+      data: subTypes,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Fetch Vehicles with filters (vehicleTypeId, status)
+ */
+export const getVehicles = async (req, res, next) => {
+  try {
+    const { vehicleTypeId, status } = req.body;
+    const query = {};
+
+    if (vehicleTypeId) query.vehicleTypeId = vehicleTypeId;
+    if (status) query.status = status;
+
+    const vehicles = await Vehicle.find(query)
+      .populate('vehicleTypeId')
+      .populate('vehicleSubTypeId')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      status: true,
+      message: 'Vehicles catalog fetched successfully.',
+      data: vehicles,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Edit Vehicle Type
+ */
+export const editVehicleType = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const { typeName, description } = req.body;
+
+    const vehicleType = await VehicleType.findById(id).session(session);
+    if (!vehicleType) {
+      throw new AppError('Vehicle type not found.', 404);
+    }
+
+    if (typeName) {
+      const normalizedTypeName = typeName.toLowerCase().trim();
+      if (normalizedTypeName !== vehicleType.typeName) {
+        // Check for duplicate names
+        const duplicate = await VehicleType.findOne({ typeName: normalizedTypeName }).session(
+          session
+        );
+        if (duplicate) {
+          throw new AppError(`Vehicle type '${typeName}' already exists.`, 400);
+        }
+        vehicleType.typeName = normalizedTypeName;
+      }
+    }
+
+    if (description !== undefined) {
+      vehicleType.description = description;
+    }
+
+    await vehicleType.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      status: true,
+      message: 'Vehicle type updated successfully.',
+      data: vehicleType,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
+  }
+};
+
+/**
+ * Toggle Vehicle Type Active/Inactive Status
+ */
+export const toggleVehicleTypeStatus = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+
+    const vehicleType = await VehicleType.findById(id).session(session);
+    if (!vehicleType) {
+      throw new AppError('Vehicle type not found.', 404);
+    }
+
+    const nextStatus = vehicleType.status === 'active' ? 'inactive' : 'active';
+    vehicleType.status = nextStatus;
+
+    await vehicleType.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      status: true,
+      message: `Vehicle type has been ${nextStatus}d successfully.`,
+      data: { status: nextStatus },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
+  }
+};
+
+/**
+ * Edit Vehicle Sub Type
+ */
+export const editVehicleSubType = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const { subTypeName, typeId, description } = req.body;
+
+    const vehicleSubType = await VehicleSubType.findById(id).session(session);
+    if (!vehicleSubType) {
+      throw new AppError('Vehicle subtype not found.', 404);
+    }
+
+    const currentTypeId = typeId || vehicleSubType.typeId;
+    const currentSubTypeName = subTypeName
+      ? subTypeName.toLowerCase().trim()
+      : vehicleSubType.subTypeName;
+
+    // Verify parent vehicle type if updated
+    if (typeId && typeId !== vehicleSubType.typeId.toString()) {
+      const typeExists = await VehicleType.findById(typeId).session(session);
+      if (!typeExists) {
+        throw new AppError('The specified Vehicle Type does not exist.', 404);
+      }
+    }
+
+    // Check duplicate if either subtype name or type association is changed
+    if (subTypeName || typeId) {
+      const isNameChanged = subTypeName && currentSubTypeName !== vehicleSubType.subTypeName;
+      const isTypeChanged = typeId && typeId !== vehicleSubType.typeId.toString();
+
+      if (isNameChanged || isTypeChanged) {
+        const duplicate = await VehicleSubType.findOne({
+          typeId: currentTypeId,
+          subTypeName: currentSubTypeName,
+        }).session(session);
+
+        if (duplicate) {
+          throw new AppError(
+            `Vehicle subtype '${currentSubTypeName}' already exists under this vehicle type.`,
+            400
+          );
+        }
+      }
+    }
+
+    if (subTypeName) vehicleSubType.subTypeName = currentSubTypeName;
+    if (typeId) vehicleSubType.typeId = typeId;
+    if (description !== undefined) vehicleSubType.description = description;
+
+    await vehicleSubType.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      status: true,
+      message: 'Vehicle subtype updated successfully.',
+      data: vehicleSubType,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
+  }
+};
+
+/**
+ * Toggle Vehicle Sub Type Active/Inactive Status
+ */
+export const toggleVehicleSubTypeStatus = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+
+    const vehicleSubType = await VehicleSubType.findById(id).session(session);
+    if (!vehicleSubType) {
+      throw new AppError('Vehicle subtype not found.', 404);
+    }
+
+    const nextStatus = vehicleSubType.status === 'active' ? 'inactive' : 'active';
+    vehicleSubType.status = nextStatus;
+
+    await vehicleSubType.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      status: true,
+      message: `Vehicle subtype has been ${nextStatus}d successfully.`,
+      data: { status: nextStatus },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
+  }
+};
+
+/**
+ * Edit Vehicle Catalog Entry
+ */
+export const editVehicle = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const {
       vehicleTypeId,
       vehicleSubTypeId,
       category,
@@ -145,15 +454,118 @@ export const addVehicle = async (req, res, next) => {
       maxPassengerCapacity,
       iconUrl,
       vehicleSpecs,
-    }], { session });
+    } = req.body;
 
+    const vehicle = await Vehicle.findById(id).session(session);
+    if (!vehicle) {
+      throw new AppError('Vehicle catalog entry not found.', 404);
+    }
+
+    const targetTypeId = vehicleTypeId || vehicle.vehicleTypeId;
+    const targetSubTypeId = vehicleSubTypeId || vehicle.vehicleSubTypeId;
+
+    // Run relational and compound checks if type or subtype changes
+    if (vehicleTypeId || vehicleSubTypeId) {
+      const isTypeChanged = vehicleTypeId && vehicleTypeId !== vehicle.vehicleTypeId.toString();
+      const isSubTypeChanged =
+        vehicleSubTypeId && vehicleSubTypeId !== vehicle.vehicleSubTypeId.toString();
+
+      if (isTypeChanged || isSubTypeChanged) {
+        // Validate type exists
+        const typeExists = await VehicleType.findById(targetTypeId).session(session);
+        if (!typeExists) {
+          throw new AppError('The specified Vehicle Type does not exist.', 404);
+        }
+
+        // Validate subtype exists
+        const subTypeExists = await VehicleSubType.findById(targetSubTypeId).session(session);
+        if (!subTypeExists) {
+          throw new AppError('The specified Vehicle Sub Type does not exist.', 404);
+        }
+
+        // Validate relational compatibility
+        if (subTypeExists.typeId.toString() !== targetTypeId.toString()) {
+          throw new AppError(
+            'The specified vehicle sub type does not belong to the specified vehicle type.',
+            400
+          );
+        }
+
+        // Check unique index violation
+        const duplicate = await Vehicle.findOne({
+          vehicleTypeId: targetTypeId,
+          vehicleSubTypeId: targetSubTypeId,
+          _id: { $ne: id }, // Exclude self
+        }).session(session);
+
+        if (duplicate) {
+          throw new AppError(
+            'A vehicle catalog entry with this type and subtype combination already exists.',
+            400
+          );
+        }
+      }
+    }
+
+    // Apply updates
+    if (vehicleTypeId) vehicle.vehicleTypeId = vehicleTypeId;
+    if (vehicleSubTypeId) vehicle.vehicleSubTypeId = vehicleSubTypeId;
+    if (category) vehicle.category = category;
+    if (title) vehicle.title = title;
+    if (description !== undefined) vehicle.description = description;
+    if (numberOfWheels) vehicle.numberOfWheels = numberOfWheels;
+    if (maxPassengerCapacity) vehicle.maxPassengerCapacity = maxPassengerCapacity;
+    if (iconUrl !== undefined) vehicle.iconUrl = iconUrl;
+
+    if (vehicleSpecs) {
+      vehicle.vehicleSpecs = {
+        ...vehicle.vehicleSpecs,
+        ...vehicleSpecs,
+      };
+    }
+
+    await vehicle.save({ session });
     await session.commitTransaction();
     session.endSession();
 
-    res.status(201).json({
+    res.status(200).json({
       status: true,
-      message: 'Vehicle catalog entry added successfully.',
-      data: newVehicle[0],
+      message: 'Vehicle catalog entry updated successfully.',
+      data: vehicle,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
+  }
+};
+
+/**
+ * Toggle Vehicle Catalog Entry Active/Inactive Status
+ */
+export const toggleVehicleStatus = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+
+    const vehicle = await Vehicle.findById(id).session(session);
+    if (!vehicle) {
+      throw new AppError('Vehicle catalog entry not found.', 404);
+    }
+
+    const nextStatus = vehicle.status === 'active' ? 'inactive' : 'active';
+    vehicle.status = nextStatus;
+
+    await vehicle.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      status: true,
+      message: `Vehicle catalog entry has been ${nextStatus}d successfully.`,
+      data: { status: nextStatus },
     });
   } catch (error) {
     await session.abortTransaction();

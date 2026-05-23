@@ -5,18 +5,45 @@ import {
   addVehicleTypeSchema,
   addVehicleSubTypeSchema,
   addVehicleSchema,
+  fetchSubTypesSchema,
+  fetchVehiclesSchema,
+  editVehicleTypeSchema,
+  editVehicleSubTypeSchema,
+  editVehicleSchema,
+  vehicleParamSchema,
 } from './vehicle.validation.js';
 import {
   addVehicleType,
   addVehicleSubType,
   addVehicle,
+  getVehicleTypes,
+  getVehicleSubTypes,
+  getVehicles,
+  editVehicleType,
+  toggleVehicleTypeStatus,
+  editVehicleSubType,
+  toggleVehicleSubTypeStatus,
+  editVehicle,
+  toggleVehicleStatus,
 } from './vehicle.controller.js';
 
 const router = express.Router();
 
-// Securing all catalog editing endpoints with Super Admin authorization
-router.use(authenticateJWT);
-router.use(authorizeRoles('super_admin'));
+// --- PUBLIC/AUTHENTICATED CATALOG QUERIES ---
+// (Accessible to any authenticated user type like Passenger/Rider/Admin)
+router.post('/get-types', authenticateJWT, getVehicleTypes);
+
+router.post(
+  '/get-subtypes',
+  authenticateJWT,
+  validate({ body: fetchSubTypesSchema }),
+  getVehicleSubTypes
+);
+
+router.post('/get-vehicles', authenticateJWT, validate({ body: fetchVehiclesSchema }), getVehicles);
+
+// --- ADMINISTRATIVE CATALOG OPERATIONS ---
+// (Restricted strictly to super_admins)
 
 /**
  * @route   POST /api/vehicles/type
@@ -25,8 +52,36 @@ router.use(authorizeRoles('super_admin'));
  */
 router.post(
   '/type',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
   validate({ body: addVehicleTypeSchema }),
   addVehicleType
+);
+
+/**
+ * @route   POST /api/vehicles/type/edit/:id
+ * @desc    Edit a base Vehicle Type
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/type/edit/:id',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ params: vehicleParamSchema, body: editVehicleTypeSchema }),
+  editVehicleType
+);
+
+/**
+ * @route   POST /api/vehicles/type/toggle-status/:id
+ * @desc    Toggle status of a base Vehicle Type
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/type/toggle-status/:id',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ params: vehicleParamSchema }),
+  toggleVehicleTypeStatus
 );
 
 /**
@@ -36,8 +91,36 @@ router.post(
  */
 router.post(
   '/subtype',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
   validate({ body: addVehicleSubTypeSchema }),
   addVehicleSubType
+);
+
+/**
+ * @route   POST /api/vehicles/subtype/edit/:id
+ * @desc    Edit a Vehicle Sub Type
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/subtype/edit/:id',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ params: vehicleParamSchema, body: editVehicleSubTypeSchema }),
+  editVehicleSubType
+);
+
+/**
+ * @route   POST /api/vehicles/subtype/toggle-status/:id
+ * @desc    Toggle status of a Vehicle Sub Type
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/subtype/toggle-status/:id',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ params: vehicleParamSchema }),
+  toggleVehicleSubTypeStatus
 );
 
 /**
@@ -47,8 +130,36 @@ router.post(
  */
 router.post(
   '/add',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
   validate({ body: addVehicleSchema }),
   addVehicle
+);
+
+/**
+ * @route   POST /api/vehicles/edit/:id
+ * @desc    Edit a Vehicle catalog master entry
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/edit/:id',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ params: vehicleParamSchema, body: editVehicleSchema }),
+  editVehicle
+);
+
+/**
+ * @route   POST /api/vehicles/toggle-status/:id
+ * @desc    Toggle status of a Vehicle catalog entry
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/toggle-status/:id',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ params: vehicleParamSchema }),
+  toggleVehicleStatus
 );
 
 export default router;
