@@ -1,0 +1,39 @@
+import Joi from 'joi';
+
+export const createAdminSchema = Joi.object({
+  name: Joi.string().trim().min(2).max(50).required(),
+  email: Joi.string().trim().email().required(),
+  password: Joi.string().min(8).max(30).required().messages({
+    'string.min': 'Password must be at least 8 characters long.'
+  }),
+  phone: Joi.string().trim().pattern(/^[0-9]{10,15}$/).optional().messages({
+    'string.pattern.base': 'Phone number must be between 10 and 15 digits.'
+  }),
+  role: Joi.string()
+    .valid('super_admin', 'finance', 'support', 'city_manager')
+    .required(),
+  assignedCityIds: Joi.array()
+    .items(Joi.string().hex().length(24).message('Invalid City ID format'))
+    .when('role', {
+      is: 'super_admin',
+      then: Joi.array().optional().default([]),
+      otherwise: Joi.array().min(1).required().messages({
+        'array.min': 'Non-super admins must be assigned to at least one city.'
+      })
+    })
+});
+
+export const editAdminSchema = Joi.object({
+  name: Joi.string().trim().min(2).max(50).optional(),
+  phone: Joi.string().trim().pattern(/^[0-9]{10,15}$/).optional(),
+  assignedCityIds: Joi.array()
+    .items(Joi.string().hex().length(24).message('Invalid City ID format'))
+    .optional()
+});
+
+export const statusParamSchema = Joi.object({
+  id: Joi.string().hex().length(24).required().messages({
+    'string.hex': 'Invalid Admin ID format.',
+    'string.length': 'Invalid Admin ID format.'
+  })
+});

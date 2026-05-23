@@ -1,0 +1,143 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+// Import middlewares
+import { apiRateLimiter, sensitiveApiRateLimiter } from './core/middlewares/limiter.js';
+import errorMiddleware from './core/middlewares/error.js';
+import userInfoMiddleware from './core/middlewares/info.js';
+import { loggerMiddleware, responseCaptureMiddleware, deleteLogsCronJobs } from './core/middlewares/logger.js';
+import { securityMiddleware, customSecurityHeaders } from './core/middlewares/security.js';
+import verifyHmac from './core/middlewares/verifyHmac.js';
+import staticFileMiddleware from './core/middlewares/files.js';
+
+// Import config and routes
+import { scheduleCronJobs } from './config/cron.js';
+import routes from './routes/router.js';
+
+dotenv.config({ quiet: true });
+
+const {
+  NODE_ENV,
+  TRUSTED_ORIGINS,
+  SENSITIVE_APIS,
+  TRUST_PROXY_LEVEL,
+} = process.env;
+
+const app = express();
+
+
+// Block unwanted HTTP Methods
+const allowedMethods = ['GET', 'POST', 'OPTIONS'];
+app.use((req, res, next) => {
+  if (!allowedMethods.includes(req.method)) {
+    return res.status(405).json({ status: false, message: 'Method Not Allowed' });
+  }
+  if (req.method === 'OPTIONS' && !req.headers['access-control-request-method']) {
+    return res.status(405).json({ status: false, message: 'Method not allowed' });
+  }
+  next();
+});
+
+// Cron jobs (global and log deletion)
+scheduleCronJobs();
+deleteLogsCronJobs();
+
+// CORS Configuration
+const allowedOrigins = TRUSTED_ORIGINS ? TRUSTED_ORIGINS.split(',') : [];
+app.use(
+  cors({
+    origin: NODE_ENV === 'production' ? allowedOrigins : '*',
+    credentials: true,
+    methods: ['POST', 'GET', 'OPTIONS'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  })
+);
+
+// Capture API response and log
+app.use(responseCaptureMiddleware);
+app.use(loggerMiddleware);
+
+// JSON Denial of Service (DoS) protection
+const payloadLimit = process.env.PAYLOAD_LIMIT || '10kb';
+app.use(express.json({ limit: payloadLimit }));
+app.use(express.urlencoded({ extended: true, limit: payloadLimit }));
+
+// Data Sanitization against NoSQL query injection
+// (express-mongo-sanitize mutates req.query which is read-only in Express 5 — manual fix)
+const sanitizeObject = (obj) => {
+  if (!obj || typeof obj !== 'object') return;
+  Object.keys(obj).forEach((key) => {
+    if (key.startsWith('$') || key.includes('.')) {
+      delete obj[key];
+    } else if (typeof obj[key] === 'object') {
+      sanitizeObject(obj[key]);
+    }
+  });
+};
+app.use((req, res, next) => {
+  sanitizeObject(req.body);
+  sanitizeObject(req.params);
+  next();
+});
+
+// Custom Security Headers
+app.use((req, res, next) => {
+  res.removeHeader('Server');
+  res.setHeader('Server', 'secure');
+  next();
+});
+app.use(securityMiddleware());
+app.use(customSecurityHeaders);
+app.disable('x-powered-by');
+
+// Dynamic Trust Proxy (crucial for Rate Limiting behind AWS/Cloudflare)
+app.set('trust proxy', parseInt(TRUST_PROXY_LEVEL || '1', 10));
+
+// Rate Limiting
+app.use('/api', apiRateLimiter());
+const sensitiveApis = SENSITIVE_APIS ? SENSITIVE_APIS.split(',') : [];
+sensitiveApis.forEach((api) => {
+  app.use(api, sensitiveApiRateLimiter());
+});
+
+// HMAC Payload Integrity & Replay Verification
+app.use((req, res, next) => {
+  if (req.is('multipart/form-data')) return next();
+  if (req.url.startsWith('/uploads')) return next();
+  if (req.url.includes('/fetch-logs')) return next();
+  if (req.url.includes('/admin')) return next(); // Skip admin utility for now
+
+  // Default: Require HMAC + Timestamp for other routes
+  return verifyHmac(req, res, next);
+});
+
+// User IP details middleware
+app.use(userInfoMiddleware);
+
+// Serve static files with security headers
+app.use('/uploads', staticFileMiddleware());
+
+// Health route
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: true,
+    message: 'HYRE Backend API is running securely.',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Setup API routes
+app.use('/api', routes);
+
+// 404 Catch all
+app.use((req, res, next) => {
+  res.status(404).json({ status: false, message: 'Route does not exist.' });
+});
+
+// Global Error handler middleware
+app.use(errorMiddleware);
+
+export default app;
