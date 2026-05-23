@@ -8,6 +8,7 @@ import {
   createAdminSchema,
   editAdminSchema,
   statusParamSchema,
+  loginSchema,
 } from "./admin.validation.js";
 import {
   createAdmin,
@@ -15,11 +16,15 @@ import {
   toggleAdminStatus,
   deleteAdmin,
 } from "./admin.controller.js";
+import {
+  login,
+  logout,
+} from "./admin.auth.controller.js";
 
 const router = express.Router();
 
-// All routes below require a valid JWT token
-// router.use(authenticateJWT);
+// All CRUD routes require authentication and authorization
+// router.use(authenticateJWT); // Handled on specific routes or globally depending on preference, but here let's keep as is.
 
 /**
  * @route   POST /api/admins/create
@@ -28,6 +33,7 @@ const router = express.Router();
  */
 router.post(
   "/create",
+  authenticateJWT,
   authorizeRoles("super_admin"),
   validate({ body: createAdminSchema }),
   createAdmin,
@@ -40,6 +46,7 @@ router.post(
  */
 router.post(
   "/edit/:id",
+  authenticateJWT,
   authorizeRoles("super_admin"),
   validate({ params: statusParamSchema, body: editAdminSchema }),
   editAdmin,
@@ -52,6 +59,7 @@ router.post(
  */
 router.post(
   "/toggle-status/:id",
+  authenticateJWT,
   authorizeRoles("super_admin"),
   validate({ params: statusParamSchema }),
   toggleAdminStatus,
@@ -64,9 +72,34 @@ router.post(
  */
 router.post(
   "/delete/:id",
+  authenticateJWT,
   authorizeRoles("super_admin"),
   validate({ params: statusParamSchema }),
   deleteAdmin,
+);
+
+// --- Admin Authentication Routes ---
+
+/**
+ * @route   POST /api/admins/auth/login
+ * @desc    Login admin & store accessToken in secure cookie
+ * @access  Public
+ */
+router.post(
+  "/auth/login",
+  validate({ body: loginSchema }),
+  login,
+);
+
+/**
+ * @route   POST /api/admins/auth/logout
+ * @desc    Logout admin & clear accessToken cookie
+ * @access  Private
+ */
+router.post(
+  "/auth/logout",
+  authenticateJWT,
+  logout,
 );
 
 export default router;

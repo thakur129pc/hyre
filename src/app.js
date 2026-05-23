@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 
 // Import middlewares
 import { apiRateLimiter, sensitiveApiRateLimiter } from './core/middlewares/limiter.js';
@@ -22,9 +23,19 @@ const {
   TRUSTED_ORIGINS,
   SENSITIVE_APIS,
   TRUST_PROXY_LEVEL,
+  COOKIE_SECRET_KEY,
 } = process.env;
 
 const app = express();
+
+// Cookie parser
+app.use(
+  cookieParser(COOKIE_SECRET_KEY, {
+    httpOnly: true,
+    secure: 'true',
+    sameSite: 'strict',
+  })
+);
 
 
 // Block unwanted HTTP Methods
@@ -103,15 +114,15 @@ sensitiveApis.forEach((api) => {
 });
 
 // HMAC Payload Integrity & Replay Verification
-app.use((req, res, next) => {
-  if (req.is('multipart/form-data')) return next();
-  if (req.url.startsWith('/uploads')) return next();
-  if (req.url.includes('/fetch-logs')) return next();
-  if (req.url.includes('/admin')) return next(); // Skip admin utility for now
+// app.use((req, res, next) => {
+//   if (req.is('multipart/form-data')) return next();
+//   if (req.url.startsWith('/uploads')) return next();
+//   if (req.url.includes('/fetch-logs')) return next();
+//   if (req.url.includes('/admin')) return next(); // Skip admin utility for now
 
-  // Default: Require HMAC + Timestamp for other routes
-  return verifyHmac(req, res, next);
-});
+//   // Default: Require HMAC + Timestamp for other routes
+//   return verifyHmac(req, res, next);
+// });
 
 // User IP details middleware
 app.use(userInfoMiddleware);
@@ -130,7 +141,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Setup API routes
-app.use('/api', routes);
+app.use('/api/v1', routes);
 
 // 404 Catch all
 app.use((req, res, next) => {

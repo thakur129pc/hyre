@@ -15,13 +15,16 @@ const adminSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive'],
     default: 'active'
-  }
+  },
+  passwordResetToken: { type: String, select: false },
+  passwordResetExpires: { type: Date, select: false }
 }, {
   timestamps: true
 });
 
 // Index for filtering admins by role and status
 adminSchema.index({ role: 1, status: 1 });
+adminSchema.index({ passwordResetToken: 1 }, { sparse: true });
 
 const Admin = mongoose.model('Admin', adminSchema);
 

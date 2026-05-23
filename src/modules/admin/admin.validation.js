@@ -3,9 +3,15 @@ import Joi from 'joi';
 export const createAdminSchema = Joi.object({
   name: Joi.string().trim().min(2).max(50).required(),
   email: Joi.string().trim().email().required(),
-  password: Joi.string().min(8).max(30).required().messages({
-    'string.min': 'Password must be at least 8 characters long.'
-  }),
+  password: Joi.string()
+    .min(8)
+    .max(30)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,30}$/)
+    .required()
+    .messages({
+      'string.min': 'Password must be at least 8 characters long.',
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+    }),
   phone: Joi.string().trim().pattern(/^[0-9]{10,15}$/).optional().messages({
     'string.pattern.base': 'Phone number must be between 10 and 15 digits.'
   }),
@@ -37,3 +43,14 @@ export const statusParamSchema = Joi.object({
     'string.length': 'Invalid Admin ID format.'
   })
 });
+
+export const loginSchema = Joi.object({
+  email: Joi.string().trim().email().required().messages({
+    'string.email': 'Please enter a valid email address.',
+    'any.required': 'Email is required.'
+  }),
+  password: Joi.string().required().messages({
+    'any.required': 'Password is required.'
+  })
+});
+
