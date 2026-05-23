@@ -1,25 +1,14 @@
-import express from "express";
-import validate from "../../core/middlewares/validate.js";
-import {
-  authenticateJWT,
-  authorizeRoles,
-} from "../../core/middlewares/auth.middleware.js";
+import express from 'express';
+import validate from '../../core/middlewares/validate.middleware.js';
+import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
 import {
   createAdminSchema,
   editAdminSchema,
   statusParamSchema,
   loginSchema,
-} from "./admin.validation.js";
-import {
-  createAdmin,
-  editAdmin,
-  toggleAdminStatus,
-  deleteAdmin,
-} from "./admin.controller.js";
-import {
-  login,
-  logout,
-} from "./admin.auth.controller.js";
+} from './admin.validation.js';
+import { createAdmin, editAdmin, toggleAdminStatus, deleteAdmin } from './admin.controller.js';
+import { login, logout } from './admin.auth.controller.js';
 
 const router = express.Router();
 
@@ -32,11 +21,11 @@ const router = express.Router();
  * @access  Private (super_admin only)
  */
 router.post(
-  "/create",
+  '/create',
   authenticateJWT,
-  authorizeRoles("super_admin"),
+  authorizeRoles('super_admin'),
   validate({ body: createAdminSchema }),
-  createAdmin,
+  createAdmin
 );
 
 /**
@@ -45,11 +34,11 @@ router.post(
  * @access  Private (super_admin only)
  */
 router.post(
-  "/edit/:id",
+  '/edit/:id',
   authenticateJWT,
-  authorizeRoles("super_admin"),
+  authorizeRoles('super_admin'),
   validate({ params: statusParamSchema, body: editAdminSchema }),
-  editAdmin,
+  editAdmin
 );
 
 /**
@@ -58,11 +47,11 @@ router.post(
  * @access  Private (super_admin only)
  */
 router.post(
-  "/toggle-status/:id",
+  '/toggle-status/:id',
   authenticateJWT,
-  authorizeRoles("super_admin"),
+  authorizeRoles('super_admin'),
   validate({ params: statusParamSchema }),
-  toggleAdminStatus,
+  toggleAdminStatus
 );
 
 /**
@@ -71,11 +60,11 @@ router.post(
  * @access  Private (super_admin only)
  */
 router.post(
-  "/delete/:id",
+  '/delete/:id',
   authenticateJWT,
-  authorizeRoles("super_admin"),
+  authorizeRoles('super_admin'),
   validate({ params: statusParamSchema }),
-  deleteAdmin,
+  deleteAdmin
 );
 
 // --- Admin Authentication Routes ---
@@ -85,21 +74,13 @@ router.post(
  * @desc    Login admin & store accessToken in secure cookie
  * @access  Public
  */
-router.post(
-  "/auth/login",
-  validate({ body: loginSchema }),
-  login,
-);
+router.post('/auth/login', validate({ body: loginSchema }), login);
 
 /**
  * @route   POST /api/admins/auth/logout
  * @desc    Logout admin & clear accessToken cookie
  * @access  Private
  */
-router.post(
-  "/auth/logout",
-  authenticateJWT,
-  logout,
-);
+router.post('/auth/logout', authenticateJWT, logout);
 
 export default router;

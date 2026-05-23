@@ -1,16 +1,12 @@
 import express from 'express';
-import validate from '../../core/middlewares/validate.js';
+import validate from '../../core/middlewares/validate.middleware.js';
 import { authenticateJWT } from '../../core/middlewares/auth.middleware.js';
 import {
   changePasswordSchema,
   forgotPasswordLinkSchema,
   resetPasswordSchema,
 } from './password.validation.js';
-import {
-  changePassword,
-  sendForgotPasswordLink,
-  resetPassword,
-} from './password.controller.js';
+import { changePassword, sendForgotPasswordLink, resetPassword } from './password.controller.js';
 
 const router = express.Router();
 
@@ -42,10 +38,6 @@ router.post(
  * @desc    Reset password using a verification token
  * @access  Public
  */
-router.post(
-  '/reset-password',
-  validate({ body: resetPasswordSchema }),
-  resetPassword
-);
+router.post('/reset-password', validate({ body: resetPasswordSchema }), resetPassword);
 
 export default router;

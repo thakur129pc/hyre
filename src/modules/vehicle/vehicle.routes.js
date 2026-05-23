@@ -1,5 +1,5 @@
 import express from 'express';
-import validate from '../../core/middlewares/validate.js';
+import validate from '../../core/middlewares/validate.middleware.js';
 import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
 import {
   addVehicleTypeSchema,

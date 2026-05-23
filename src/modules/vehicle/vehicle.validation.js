@@ -49,7 +49,7 @@ export const addVehicleSchema = Joi.object({
   }),
   iconUrl: Joi.string().trim().uri().optional().allow(''),
   vehicleSpecs: Joi.object({
-    topSpeed: Joi.number().min(0).optional(),
+    topSpeedPerKm: Joi.number().min(0).optional(),
     batteryCapacityKwh: Joi.number().min(0).optional(),
     rangePerChargeKm: Joi.number().min(0).optional(),
     chargingTimeHours: Joi.number().min(0).optional(),
@@ -92,7 +92,7 @@ export const editVehicleSchema = Joi.object({
   maxPassengerCapacity: Joi.number().integer().min(1).max(100).optional(),
   iconUrl: Joi.string().trim().uri().optional().allow(''),
   vehicleSpecs: Joi.object({
-    topSpeed: Joi.number().min(0).optional(),
+    topSpeedPerKm: Joi.number().min(0).optional(),
     batteryCapacityKwh: Joi.number().min(0).optional(),
     rangePerChargeKm: Joi.number().min(0).optional(),
     chargingTimeHours: Joi.number().min(0).optional(),

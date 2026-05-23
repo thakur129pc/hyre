@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import VehicleType from './vehicleType.model.js';
 import VehicleSubType from './vehicleSubType.model.js';
 import Vehicle from './vehicle.model.js';
-import { AppError } from '../../core/utils/appError.js';
+import { AppError } from '../../core/utils/appError.util.js';
 
 /**
  * Add Vehicle Type API

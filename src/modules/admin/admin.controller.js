@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import Admin from './admin.model.js';
-import { AppError } from '../../core/utils/appError.js';
+import { AppError } from '../../core/utils/appError.util.js';
 
 export const createAdmin = async (req, res, next) => {
   const session = await mongoose.startSession();
@@ -21,14 +21,19 @@ export const createAdmin = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create Admin
-    const newAdmin = await Admin.create([{
-      name,
-      email,
-      password: hashedPassword,
-      phone,
-      role,
-      assignedCityIds: role === 'super_admin' ? [] : assignedCityIds
-    }], { session });
+    const newAdmin = await Admin.create(
+      [
+        {
+          name,
+          email,
+          password: hashedPassword,
+          phone,
+          role,
+          assignedCityIds: role === 'super_admin' ? [] : assignedCityIds,
+        },
+      ],
+      { session }
+    );
 
     await session.commitTransaction();
     session.endSession();
@@ -40,7 +45,7 @@ export const createAdmin = async (req, res, next) => {
     res.status(201).json({
       status: true,
       message: 'Admin created successfully.',
-      data: adminResponse
+      data: adminResponse,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -63,7 +68,7 @@ export const editAdmin = async (req, res, next) => {
       throw new AppError('Admin not found.', 404);
     }
 
-    // Only super_admin can edit other admins or themselves. 
+    // Only super_admin can edit other admins or themselves.
     // Handled by RBAC, but let's be strict: A super_admin shouldn't easily lose their role.
 
     const updatedAdmin = await Admin.findByIdAndUpdate(
@@ -78,7 +83,7 @@ export const editAdmin = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'Admin updated successfully.',
-      data: updatedAdmin
+      data: updatedAdmin,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -117,7 +122,7 @@ export const toggleAdminStatus = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: `Admin has been ${newStatus}d successfully.`,
-      data: { status: newStatus }
+      data: { status: newStatus },
     });
   } catch (error) {
     await session.abortTransaction();
@@ -153,7 +158,7 @@ export const deleteAdmin = async (req, res, next) => {
 
     res.status(200).json({
       status: true,
-      message: 'Admin deleted successfully.'
+      message: 'Admin deleted successfully.',
     });
   } catch (error) {
     await session.abortTransaction();

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Admin from './admin.model.js';
-import { AppError } from '../../core/utils/appError.js';
+import { AppError } from '../../core/utils/appError.util.js';
 
 /**
  * Admin Login API

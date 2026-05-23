@@ -1,17 +1,19 @@
 import crypto from 'crypto';
-import { AppError } from '../utils/appError.js';
+import { AppError } from '../utils/appError.util.js';
 
 const formDataToString = (body, files) => {
   const entries = [];
   Object.keys(body).forEach((key) => entries.push(`${key}=${body[key]}`));
-  
+
   if (files) {
     Object.keys(files).forEach((key) => {
       const fileArray = files[key];
       const fieldName = fileArray[0].fieldname;
-      fileArray.map(file => file.originalname).forEach((fileName) => {
-        entries.push(`${fieldName}=${fileName}`);
-      });
+      fileArray
+        .map((file) => file.originalname)
+        .forEach((fileName) => {
+          entries.push(`${fieldName}=${fileName}`);
+        });
     });
   }
 
@@ -27,7 +29,7 @@ const verifyHmac = (req, res, next) => {
   if (!receivedHash) {
     throw new AppError('Missing HMAC signature (x-signature)', 400);
   }
-  
+
   // 1. REPLAY ATTACK PROTECTION: Enforce valid timestamp
   if (!timestamp) {
     throw new AppError('Missing timestamp (x-timestamp) for replay protection', 400);

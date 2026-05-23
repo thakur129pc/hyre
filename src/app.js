@@ -4,13 +4,20 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 
 // Import middlewares
-import { apiRateLimiter, sensitiveApiRateLimiter } from './core/middlewares/limiter.js';
-import errorMiddleware from './core/middlewares/error.js';
-import userInfoMiddleware from './core/middlewares/info.js';
-import { loggerMiddleware, responseCaptureMiddleware, deleteLogsCronJobs } from './core/middlewares/logger.js';
-import { securityMiddleware, customSecurityHeaders } from './core/middlewares/security.js';
-import verifyHmac from './core/middlewares/verifyHmac.js';
-import staticFileMiddleware from './core/middlewares/files.js';
+import { apiRateLimiter, sensitiveApiRateLimiter } from './core/middlewares/limiter.middleware.js';
+import errorMiddleware from './core/middlewares/error.middleware.js';
+import userInfoMiddleware from './core/middlewares/info.middleware.js';
+import {
+  loggerMiddleware,
+  responseCaptureMiddleware,
+  deleteLogsCronJobs,
+} from './core/middlewares/logger.middleware.js';
+import {
+  securityMiddleware,
+  customSecurityHeaders,
+} from './core/middlewares/security.middleware.js';
+import verifyHmac from './core/middlewares/verifyHmac.middleware.js';
+import staticFileMiddleware from './core/middlewares/files.middleware.js';
 
 // Import config and routes
 import { scheduleCronJobs } from './config/cron.js';
@@ -18,13 +25,8 @@ import routes from './routes/router.js';
 
 dotenv.config({ quiet: true });
 
-const {
-  NODE_ENV,
-  TRUSTED_ORIGINS,
-  SENSITIVE_APIS,
-  TRUST_PROXY_LEVEL,
-  COOKIE_SECRET_KEY,
-} = process.env;
+const { NODE_ENV, TRUSTED_ORIGINS, SENSITIVE_APIS, TRUST_PROXY_LEVEL, COOKIE_SECRET_KEY } =
+  process.env;
 
 const app = express();
 
@@ -36,7 +38,6 @@ app.use(
     sameSite: 'strict',
   })
 );
-
 
 // Block unwanted HTTP Methods
 const allowedMethods = ['GET', 'POST', 'OPTIONS'];
@@ -136,7 +137,7 @@ app.get('/api/health', (req, res) => {
     status: true,
     message: 'HYRE Backend API is running securely.',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { AppError } from '../utils/appError.js';
+import { AppError } from '../utils/appError.util.js';
 import Admin from '../../modules/admin/admin.model.js';
 
 /**
@@ -8,7 +8,7 @@ import Admin from '../../modules/admin/admin.model.js';
 export const authenticateJWT = async (req, res, next) => {
   try {
     let token;
-    
+
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     } else if (req.cookies && req.cookies.accessToken) {
@@ -63,7 +63,9 @@ export const authorizeRoles = (...allowedRoles) => {
 
     // Check if user's role is in the allowed array
     if (!allowedRoles.includes(req.user.role)) {
-      return next(new AppError(`Role '${req.user.role}' is not authorized to access this route.`, 403));
+      return next(
+        new AppError(`Role '${req.user.role}' is not authorized to access this route.`, 403)
+      );
     }
 
     next();

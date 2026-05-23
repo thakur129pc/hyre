@@ -4,19 +4,13 @@ import https from 'https';
 import dotenv from 'dotenv';
 import connectDB from './src/config/db.js';
 import app from './src/app.js';
-import { handleServerError } from './src/core/utils/handleServerError.js';
-import { AppError } from './src/core/utils/appError.js';
+import { handleServerError } from './src/core/utils/handleServerError.util.js';
+import { AppError } from './src/core/utils/appError.util.js';
 
 dotenv.config({ quiet: true });
 
 const startServer = async () => {
-  const {
-    NODE_ENV,
-    HTTP_PORT,
-    HTTPS_PORT,
-    SSL_SERVER_KEY,
-    SSL_SERVER_CERT,
-  } = process.env;
+  const { NODE_ENV, HTTP_PORT, HTTPS_PORT, SSL_SERVER_KEY, SSL_SERVER_CERT } = process.env;
 
   try {
     // Connect to Database
@@ -34,10 +28,10 @@ const startServer = async () => {
       // Read SSL credentials
       const privateKey = fs.readFileSync(SSL_SERVER_KEY, 'utf8');
       const certificate = fs.readFileSync(SSL_SERVER_CERT, 'utf8');
-      
+
       // Enforce strong TLS configurations
-      const credentials = { 
-        key: privateKey, 
+      const credentials = {
+        key: privateKey,
         cert: certificate,
         minVersion: 'TLSv1.2',
         ciphers: [
@@ -59,7 +53,6 @@ const startServer = async () => {
 
       // Handle server error
       httpsServer.on('error', handleServerError('HTTPS'));
-
     } else {
       // HTTP server only for local development
       const httpServer = http.createServer(app);

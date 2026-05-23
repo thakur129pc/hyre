@@ -1,4 +1,4 @@
-import { AppError } from '../utils/appError.js';
+import { AppError } from '../utils/appError.util.js';
 
 /**
  * Validates request payload against Joi schemas.
@@ -17,13 +17,21 @@ const validate = (schema) => (req, res, next) => {
   Object.keys(validSchema).forEach((key) => {
     const { error, value } = validSchema[key].validate(req[key], {
       abortEarly: false,
-      stripUnknown: true, // Remove unknown keys
+      allowUnknown: false, // Disallow extra keys
+      stripUnknown: false, // Do not silently strip extra keys
     });
 
     if (error) {
-      error.details.forEach((err) => errors.push(err.message));
+      error.details.forEach((err) => {
+        if (err.type === 'object.unknown') {
+          const typeName = key === 'params' ? 'param' : 'payload key';
+          errors.push(`"${err.path.join('.')}" is not a valid ${typeName}.`);
+        } else {
+          errors.push(err.message);
+        }
+      });
     } else {
-      req[key] = value; // Apply parsed/stripped values back to request
+      req[key] = value; // Apply parsed values back to request
     }
   });
 

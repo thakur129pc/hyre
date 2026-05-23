@@ -4,12 +4,12 @@ import crypto from 'crypto';
 import Admin from '../admin/admin.model.js';
 import Passenger from '../passenger/passenger.model.js';
 import Rider from '../rider/rider.model.js';
-import { AppError } from '../../core/utils/appError.js';
-import sendMail from '../../core/utils/sendMail.js';
+import { AppError } from '../../core/utils/appError.util.js';
+import sendMail from '../../core/utils/sendMail.util.js';
 
 /**
  * Resolves the appropriate Mongoose model based on the userType.
- * @param {string} userType 
+ * @param {string} userType
  * @returns {mongoose.Model|null}
  */
 const getModelByUserType = (userType) => {
@@ -28,7 +28,7 @@ const getModelByUserType = (userType) => {
 /**
  * Validates that the resolved model actually has password fields.
  * Throws a clean 400 validation error if not supported.
- * @param {mongoose.Model} Model 
+ * @param {mongoose.Model} Model
  */
 const verifyPasswordSupport = (Model) => {
   if (!Model.schema.paths.password) {
@@ -150,7 +150,10 @@ export const sendForgotPasswordLink = async (req, res, next) => {
 
     const emailSent = await sendMail(user.email, mailSubject, mailContent);
     if (!emailSent) {
-      throw new AppError('There was an error sending the reset email. Please try again later.', 500);
+      throw new AppError(
+        'There was an error sending the reset email. Please try again later.',
+        500
+      );
     }
 
     await session.commitTransaction();
@@ -190,7 +193,9 @@ export const resetPassword = async (req, res, next) => {
     const user = await Model.findOne({
       passwordResetToken: hashedToken,
       passwordResetExpires: { $gt: new Date() },
-    }).select('+password').session(session);
+    })
+      .select('+password')
+      .session(session);
 
     if (!user) {
       throw new AppError('Password reset token is invalid or has expired.', 400);
