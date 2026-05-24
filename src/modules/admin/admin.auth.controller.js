@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import Admin from './admin.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
 import { logAudit } from '../../core/utils/auditLogger.util.js';
+import { logAuthEvent } from '../../core/utils/authLogger.util.js';
 
 /**
  * Admin Login API
@@ -15,16 +16,42 @@ export const login = async (req, res, next) => {
     // Find admin and explicitly select password
     const admin = await Admin.findOne({ email }).select('+password');
     if (!admin) {
+      await logAuthEvent({
+        req,
+        userType: 'Admin',
+        action: 'failed_attempt',
+        status: 'failure',
+        attemptedIdentifier: email,
+        failureReason: 'User not found',
+      });
       throw new AppError('Invalid email or password.', 401);
     }
 
     if (admin.status !== 'active') {
+      await logAuthEvent({
+        req,
+        userId: admin._id,
+        userType: 'Admin',
+        action: 'failed_attempt',
+        status: 'failure',
+        attemptedIdentifier: email,
+        failureReason: 'Account inactive',
+      });
       throw new AppError('Your account is inactive. Please contact support.', 403);
     }
 
     // Verify password
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
+      await logAuthEvent({
+        req,
+        userId: admin._id,
+        userType: 'Admin',
+        action: 'failed_attempt',
+        status: 'failure',
+        attemptedIdentifier: email,
+        failureReason: 'Incorrect password',
+      });
       throw new AppError('Invalid email or password.', 401);
     }
 
@@ -49,7 +76,16 @@ export const login = async (req, res, next) => {
     const adminResponse = admin.toObject();
     delete adminResponse.password;
 
-    // Log the successful login event
+    // Log the successful login event to AuthLog
+    await logAuthEvent({
+      req,
+      userId: admin._id,
+      userType: 'Admin',
+      action: 'login',
+      status: 'success',
+    });
+
+    // Log the successful login event to AuditLog
     await logAudit({
       req,
       action: 'LOGIN',
@@ -87,7 +123,18 @@ export const logout = async (req, res, next) => {
       sameSite: 'strict',
     });
 
-    // Log the logout event
+    // Log the logout event to AuthLog
+    if (req.user) {
+      await logAuthEvent({
+        req,
+        userId: req.user.id,
+        userType: req.userType || 'Admin',
+        action: 'logout',
+        status: 'success',
+      });
+    }
+
+    // Log the logout event to AuditLog
     await logAudit({
       req,
       action: 'LOGOUT',

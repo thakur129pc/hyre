@@ -7,6 +7,7 @@ import Rider from '../rider/rider.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
 import sendMail from '../../core/utils/sendMail.util.js';
 import { logAudit } from '../../core/utils/auditLogger.util.js';
+import { logAuthEvent } from '../../core/utils/authLogger.util.js';
 
 /**
  * Resolves the appropriate Mongoose model based on the userType.
@@ -63,6 +64,14 @@ export const changePassword = async (req, res, next) => {
     // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
+      await logAuthEvent({
+        req,
+        userId: user._id,
+        userType: req.userType,
+        action: 'password_change',
+        status: 'failure',
+        failureReason: 'Incorrect current password',
+      });
       throw new AppError('Incorrect current password.', 400);
     }
 
@@ -79,7 +88,16 @@ export const changePassword = async (req, res, next) => {
     user.password = hashedPassword;
     await user.save({ session });
 
-    // Log password change action
+    // Log password change to AuthLog
+    await logAuthEvent({
+      req,
+      userId: user._id,
+      userType: req.userType,
+      action: 'password_change',
+      status: 'success',
+    });
+
+    // Log password change action to AuditLog
     await logAudit({
       req,
       action: 'PASSWORD_CHANGE',
@@ -122,6 +140,14 @@ export const sendForgotPasswordLink = async (req, res, next) => {
 
     const user = await Model.findOne({ email }).session(session);
     if (!user) {
+      await logAuthEvent({
+        req,
+        userType,
+        action: 'password_reset_request',
+        status: 'failure',
+        attemptedIdentifier: email,
+        failureReason: 'User not found',
+      });
       // Security: return generic success to prevent email enumeration
       await session.commitTransaction();
       session.endSession();
@@ -166,7 +192,17 @@ export const sendForgotPasswordLink = async (req, res, next) => {
       );
     }
 
-    // Log the reset request event
+    // Log forgot password request to AuthLog
+    await logAuthEvent({
+      req,
+      userId: user._id,
+      userType,
+      action: 'password_reset_request',
+      status: 'success',
+      attemptedIdentifier: email,
+    });
+
+    // Log the reset request event to AuditLog
     await logAudit({
       req,
       action: 'PASSWORD_RESET_REQUEST',
@@ -219,6 +255,13 @@ export const resetPassword = async (req, res, next) => {
       .session(session);
 
     if (!user) {
+      await logAuthEvent({
+        req,
+        userType,
+        action: 'password_reset',
+        status: 'failure',
+        failureReason: 'Invalid or expired token',
+      });
       throw new AppError('Password reset token is invalid or has expired.', 400);
     }
 
@@ -236,7 +279,16 @@ export const resetPassword = async (req, res, next) => {
     user.passwordResetExpires = undefined;
     await user.save({ session });
 
-    // Log the successful password reset event
+    // Log successful reset to AuthLog
+    await logAuthEvent({
+      req,
+      userId: user._id,
+      userType,
+      action: 'password_reset',
+      status: 'success',
+    });
+
+    // Log the successful password reset event to AuditLog
     await logAudit({
       req,
       action: 'PASSWORD_RESET',

@@ -6,18 +6,6 @@ import { fileURLToPath } from 'url';
 import readline from 'readline';
 import Admin from './admin.model.js';
 import AuditLog from '../audit/auditLog.model.js';
-// eslint-disable-next-line no-unused-vars
-import City from '../city/city.model.js';
-// eslint-disable-next-line no-unused-vars
-import Vehicle from '../vehicle/vehicle.model.js';
-// eslint-disable-next-line no-unused-vars
-import VehicleType from '../vehicle/vehicleType.model.js';
-// eslint-disable-next-line no-unused-vars
-import VehicleSubType from '../vehicle/vehicleSubType.model.js';
-// eslint-disable-next-line no-unused-vars
-import Rider from '../rider/rider.model.js';
-// eslint-disable-next-line no-unused-vars
-import Passenger from '../passenger/passenger.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
 import { logAudit } from '../../core/utils/auditLogger.util.js';
 

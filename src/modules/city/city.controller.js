@@ -51,8 +51,8 @@ export const createCity = async (req, res, next) => {
       status,
       servicedPincodes,
       coordinates,
-      allowedVehicleTypes,
-      activeVehicleTypes,
+      allowedVehicles,
+      activeVehicles,
       city_config,
     } = req.body;
 
@@ -78,25 +78,22 @@ export const createCity = async (req, res, next) => {
     }
 
     // Verify referenced vehicles exist
-    const allVehicleIdsToCheck = [...(allowedVehicleTypes || []), ...(activeVehicleTypes || [])];
+    const allVehicleIdsToCheck = [...(allowedVehicles || []), ...(activeVehicles || [])];
 
     if (allVehicleIdsToCheck.length > 0) {
       const uniqueIds = [...new Set(allVehicleIdsToCheck)];
       const foundCount = await Vehicle.countDocuments({ _id: { $in: uniqueIds } }).session(session);
       if (foundCount !== uniqueIds.length) {
-        throw new AppError(
-          'One or more referenced vehicle types do not exist in the catalog.',
-          400
-        );
+        throw new AppError('One or more referenced vehicles do not exist in the catalog.', 400);
       }
     }
 
-    // Verify activeVehicleTypes is a subset of allowed vehicle types
-    const activeSet = new Set(activeVehicleTypes || []);
-    const allowedSet = new Set(allowedVehicleTypes || []);
+    // Verify activeVehicles is a subset of allowed vehicles
+    const activeSet = new Set(activeVehicles || []);
+    const allowedSet = new Set(allowedVehicles || []);
     for (const activeId of activeSet) {
       if (!allowedSet.has(activeId)) {
-        throw new AppError('Active vehicle types must be a subset of allowed vehicle types.', 400);
+        throw new AppError('Active vehicles must be a subset of allowed vehicles.', 400);
       }
     }
 
@@ -111,8 +108,8 @@ export const createCity = async (req, res, next) => {
           status: status || 'coming_soon',
           servicedPincodes: servicedPincodes || [],
           coordinates: coordinates || [],
-          allowedVehicleTypes: allowedVehicleTypes || [],
-          activeVehicleTypes: activeVehicleTypes || [],
+          allowedVehicles: allowedVehicles || [],
+          activeVehicles: activeVehicles || [],
           city_config: city_config || {},
         },
       ],
@@ -170,8 +167,8 @@ export const editCity = async (req, res, next) => {
       status,
       servicedPincodes,
       coordinates,
-      allowedVehicleTypes,
-      activeVehicleTypes,
+      allowedVehicles,
+      activeVehicles,
       city_config,
     } = req.body;
 
@@ -206,33 +203,30 @@ export const editCity = async (req, res, next) => {
     }
 
     // Verify referenced vehicles exist
-    const allVehicleIdsToCheck = [...(allowedVehicleTypes || []), ...(activeVehicleTypes || [])];
+    const allVehicleIdsToCheck = [...(allowedVehicles || []), ...(activeVehicles || [])];
 
     if (allVehicleIdsToCheck.length > 0) {
       const uniqueIds = [...new Set(allVehicleIdsToCheck)];
       const foundCount = await Vehicle.countDocuments({ _id: { $in: uniqueIds } }).session(session);
       if (foundCount !== uniqueIds.length) {
-        throw new AppError(
-          'One or more referenced vehicle types do not exist in the catalog.',
-          400
-        );
+        throw new AppError('One or more referenced vehicles do not exist in the catalog.', 400);
       }
     }
 
-    // Verify activeVehicleTypes is a subset of allowed vehicle types
+    // Verify activeVehicles is a subset of allowed vehicles
     const targetAllowed =
-      allowedVehicleTypes !== undefined
-        ? allowedVehicleTypes
-        : city.allowedVehicleTypes.map((id) => id.toString());
+      allowedVehicles !== undefined
+        ? allowedVehicles
+        : city.allowedVehicles.map((id) => id.toString());
     const targetActive =
-      activeVehicleTypes !== undefined
-        ? activeVehicleTypes
-        : city.activeVehicleTypes.map((id) => id.toString());
+      activeVehicles !== undefined
+        ? activeVehicles
+        : city.activeVehicles.map((id) => id.toString());
 
     const allowedSet = new Set(targetAllowed);
     for (const activeId of targetActive) {
       if (!allowedSet.has(activeId)) {
-        throw new AppError('Active vehicle types must be a subset of allowed vehicle types.', 400);
+        throw new AppError('Active vehicles must be a subset of allowed vehicles.', 400);
       }
     }
 
@@ -244,8 +238,8 @@ export const editCity = async (req, res, next) => {
     if (status !== undefined) city.status = status;
     if (servicedPincodes !== undefined) city.servicedPincodes = servicedPincodes;
     if (coordinates !== undefined) city.coordinates = coordinates;
-    if (allowedVehicleTypes !== undefined) city.allowedVehicleTypes = allowedVehicleTypes;
-    if (activeVehicleTypes !== undefined) city.activeVehicleTypes = activeVehicleTypes;
+    if (allowedVehicles !== undefined) city.allowedVehicles = allowedVehicles;
+    if (activeVehicles !== undefined) city.activeVehicles = activeVehicles;
 
     if (city_config !== undefined) {
       // Merge keys to support partial config updates

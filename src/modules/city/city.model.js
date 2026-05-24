@@ -30,13 +30,13 @@ const citySchema = new mongoose.Schema(
       type: [Number], // [longitude, latitude]
       default: [],
     },
-    allowedVehicleTypes: [
+    allowedVehicles: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Vehicle',
       },
     ],
-    activeVehicleTypes: [
+    activeVehicles: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Vehicle',

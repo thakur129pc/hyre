@@ -19,8 +19,8 @@ export const createCitySchema = Joi.object({
   iconUrl: Joi.string().trim().optional().allow(''),
   servicedPincodes: Joi.array().items(Joi.string().trim()).optional().default([]),
   coordinates: Joi.array().items(Joi.number()).length(2).optional().default([]),
-  allowedVehicleTypes: Joi.array().items(Joi.string().hex().length(24)).optional().default([]),
-  activeVehicleTypes: Joi.array().items(Joi.string().hex().length(24)).optional().default([]),
+  allowedVehicles: Joi.array().items(Joi.string().hex().length(24)).optional().default([]),
+  activeVehicles: Joi.array().items(Joi.string().hex().length(24)).optional().default([]),
   city_config: Joi.object({
     currency: Joi.string().trim().optional().default('INR'),
     timezone: Joi.string().trim().optional().default('Asia/Kolkata'),
@@ -42,8 +42,8 @@ export const editCitySchema = Joi.object({
   }),
   servicedPincodes: Joi.array().items(Joi.string().trim()).optional(),
   coordinates: Joi.array().items(Joi.number()).length(2).optional(),
-  allowedVehicleTypes: Joi.array().items(Joi.string().hex().length(24)).optional(),
-  activeVehicleTypes: Joi.array().items(Joi.string().hex().length(24)).optional(),
+  allowedVehicles: Joi.array().items(Joi.string().hex().length(24)).optional(),
+  activeVehicles: Joi.array().items(Joi.string().hex().length(24)).optional(),
   city_config: Joi.object({
     currency: Joi.string().trim().optional(),
     timezone: Joi.string().trim().optional(),

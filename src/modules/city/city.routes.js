@@ -31,8 +31,8 @@ const parseCityMultipartFields = (req, res, next) => {
   const jsonFields = [
     'servicedPincodes',
     'coordinates',
-    'allowedVehicleTypes',
-    'activeVehicleTypes',
+    'allowedVehicles',
+    'activeVehicles',
     'city_config',
   ];
   for (const field of jsonFields) {
@@ -52,8 +52,6 @@ const router = express.Router();
 // --- PUBLIC/AUTHENTICATED CITY QUERIES ---
 // Accessible to any logged in user (Admins, Passenger, Riders)
 router.post('/get-cities', authenticateJWT, validate({ body: fetchCitiesSchema }), getCities);
-
-router.route('/:id').post(authenticateJWT, validate({ params: cityParamSchema }), getCityById);
 
 router.post(
   '/get-city-by-id',
@@ -102,5 +100,8 @@ router.post(
   validate({ params: cityParamSchema }),
   toggleCityStatus
 );
+
+// Wildcard parameter route defined at the bottom to prevent intercepting other static paths
+router.route('/:id').post(authenticateJWT, validate({ params: cityParamSchema }), getCityById);
 
 export default router;

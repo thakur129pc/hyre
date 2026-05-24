@@ -173,55 +173,22 @@ export const loggerMiddleware = morgan((tokens, req, res) => {
   const statusCode = parseInt(tokens.status(req, res), 10);
   const isError = statusCode >= 400;
   writeLogToFile(stringifiedLog, isError);
-
-  const userId = tokens['user-id'](req, res);
-  if (
-    tokens.url(req, res).toLowerCase().includes('login') &&
-    tokens.status(req, res) === '200' &&
-    userId
-  ) {
-    const userAgent = useragent.parse(req.headers['user-agent'] || '');
-    const location = tokens['user-location'](req, res) || {};
-
-    // Determine userType roughly based on URL or req.body, default to Passenger
-    let userType = 'Passenger';
-    if (req.url.includes('rider') || req.url.includes('driver')) userType = 'Rider';
-    if (req.url.includes('admin')) userType = 'Admin';
-
-    const metadata = {
-      ipAddress: ipAddress,
-      platform: userAgent.platform,
-      os: userAgent.os,
-      browser: userAgent.browser,
-      device: userAgent.device || 'Unknown',
-      baseUrl: tokens['base-url'](req, res),
-      url: tokens.url(req, res),
-      referrer: tokens['referrer'](req, res),
-      country: location.country || 'Unknown',
-      region: location.region || 'Unknown',
-      city: location.city || 'Unknown',
-      location: {
-        type: 'Point',
-        coordinates: [location.lon || 0, location.lat || 0],
-      },
-    };
-
-    AuthLog.findOneAndUpdate(
-      { userId, userType },
-      {
-        $setOnInsert: { action: 'login', status: 'success' },
-        $set: { metadata },
-        $push: {
-          history: { $each: [{ timestamp: new Date(), ip: metadata.ipAddress }], $slice: -100 },
-        },
-      },
-      { upsert: true, returnDocument: 'after' }
-    ).catch(() => console.error('🔴 Error saving login history. Details omitted for security.'));
-  }
 });
 
-const deleteOldLogs = () => {
+const deleteOldLogs = async () => {
   console.log('🔵 Running daily log cleanup......');
+
+  // 1. Database AuthLog cleanup (delete older than 90 days)
+  try {
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const result = await AuthLog.deleteMany({ performedAt: { $lt: ninetyDaysAgo } });
+    console.log(`🟢 Deleted ${result.deletedCount} old auth logs from database.`);
+  } catch (err) {
+    console.error('🔴 Error cleaning up old auth logs from database:', err.message);
+  }
+
+  // 2. File logs cleanup
   const files = fs.readdirSync(logsDirectory);
   const now = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
   const [day, month, year] = now.split(',')[0].split('/');

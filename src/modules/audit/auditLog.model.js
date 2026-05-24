@@ -35,7 +35,16 @@ const auditLogSchema = new mongoose.Schema(
     entityType: {
       type: String,
       required: true,
-      enum: ['Admin', 'City', 'Vehicle', 'VehicleType', 'VehicleSubType', 'Rider', 'Passenger'],
+      enum: [
+        'Admin',
+        'City',
+        'Vehicle',
+        'VehicleType',
+        'VehicleSubType',
+        'Rider',
+        'Passenger',
+        'Price',
+      ],
     },
     changes: {
       before: { type: mongoose.Schema.Types.Mixed, default: null },
