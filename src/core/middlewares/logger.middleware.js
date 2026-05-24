@@ -9,10 +9,10 @@ import AuthLog from '../../modules/auth/authLog.model.js';
 morgan.token('user-details', (req) => {
   if (req.user) {
     return {
-      id: req.user.id,
+      id: req.user.id || req.user._id,
       name: req.user.name,
       role: req.user.role,
-      level: req.user.level || null,
+      userType: req.userType || null,
     };
   }
   return { status: 'unauthenticated' };
@@ -42,14 +42,42 @@ morgan.token('referrer', (req) => req.get('referrer') || 'none');
 morgan.token('req-size', (req) => req.headers['content-length'] || 'unknown');
 morgan.token('res-size', (req, res) => res.get('content-length') || 'unknown');
 morgan.token('http-version', (req) => req.httpVersion);
-morgan.token('req-body', (req) => req.body || {});
+
+// Secure sanitization of logged request body to redact sensitive password credentials
+morgan.token('req-body', (req) => {
+  if (!req.body || typeof req.body !== 'object') return {};
+  const sanitized = { ...req.body };
+  const sensitiveKeys = [
+    'password',
+    'currentPassword',
+    'newPassword',
+    'oldPassword',
+    'confirmPassword',
+    'token',
+    'accessToken',
+    'secret',
+  ];
+
+  const redact = (obj) => {
+    Object.keys(obj).forEach((key) => {
+      if (sensitiveKeys.includes(key)) {
+        obj[key] = '[REDACTED]';
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        redact(obj[key]);
+      }
+    });
+  };
+
+  redact(sanitized);
+  return sanitized;
+});
 
 morgan.token('res-info', (req, res) => {
   if (res.locals.responseBody) {
     const { status, message } = res.locals.responseBody;
     return { status, message };
   }
-  return '{}';
+  return {};
 });
 
 morgan.token('user-id', (req, res) => {
@@ -66,10 +94,18 @@ export const responseCaptureMiddleware = (req, res, next) => {
   res.send = function (data) {
     try {
       const jsonData = typeof data === 'string' ? JSON.parse(data) : data;
+      const extractedUserId =
+        jsonData?.user?._id ||
+        jsonData?.data?.user?._id ||
+        jsonData?.data?._id ||
+        jsonData?.admin?._id ||
+        jsonData?.data?.admin?._id ||
+        undefined;
+
       res.locals.responseBody = {
         status: jsonData?.status !== undefined ? jsonData.status : null,
         message: jsonData?.message || null,
-        userId: jsonData?.user?._id || undefined,
+        userId: extractedUserId,
       };
     } catch (error) {
       res.locals.responseBody = {};
@@ -81,25 +117,39 @@ export const responseCaptureMiddleware = (req, res, next) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const logsDirectory = path.join(__dirname, '../../../../logs');
+const logsDirectory = path.join(__dirname, '../../../logs');
 
 if (!fs.existsSync(logsDirectory)) {
   fs.mkdirSync(logsDirectory, { recursive: true });
 }
 
-const writeLogToFile = (logMessage) => {
+const writeLogToFile = (logMessage, isError) => {
   const istDate = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
   const [day, month, year] = istDate.split(',')[0].split('/');
   const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
-  const logFileName = path.join(logsDirectory, `${formattedDate}.log`);
-
-  fs.appendFile(logFileName, logMessage + '\n', (err) => {
-    if (err) console.error('Error writing to log file:', err);
+  // 1. Combined Log (always write)
+  const combinedLogFileName = path.join(logsDirectory, `combined-${formattedDate}.log`);
+  fs.appendFile(combinedLogFileName, logMessage + '\n', (err) => {
+    if (err) console.error('Error writing to combined log file:', err);
   });
+
+  // 2. Error Log (write only if status code indicates client/server error, i.e., 4xx or 5xx)
+  if (isError) {
+    const errorLogFileName = path.join(logsDirectory, `error-${formattedDate}.log`);
+    fs.appendFile(errorLogFileName, logMessage + '\n', (err) => {
+      if (err) console.error('Error writing to error log file:', err);
+    });
+  }
 };
 
 export const loggerMiddleware = morgan((tokens, req, res) => {
+  const ipAddress =
+    req.headers['x-forwarded-for'] ||
+    req.socket.remoteAddress ||
+    req.ip ||
+    tokens['remote-addr'](req, res);
+
   let logMessage = {
     timestamp: tokens.timestamp(req, res),
     method: tokens.method(req, res),
@@ -113,14 +163,16 @@ export const loggerMiddleware = morgan((tokens, req, res) => {
     responseSize: `${tokens['res-size'](req, res)} bytes`,
     requestBody: tokens['req-body'](req, res),
     responseInfo: tokens['res-info'](req, res),
-    ip: tokens['remote-addr'](req, res),
+    ip: ipAddress,
     userDetails: tokens['user-details'](req, res),
     location: tokens['user-location'](req, res),
     userAgent: tokens['user-agent'](req, res),
   };
 
   const stringifiedLog = JSON.stringify(logMessage);
-  writeLogToFile(stringifiedLog);
+  const statusCode = parseInt(tokens.status(req, res), 10);
+  const isError = statusCode >= 400;
+  writeLogToFile(stringifiedLog, isError);
 
   const userId = tokens['user-id'](req, res);
   if (
@@ -130,14 +182,14 @@ export const loggerMiddleware = morgan((tokens, req, res) => {
   ) {
     const userAgent = useragent.parse(req.headers['user-agent'] || '');
     const location = tokens['user-location'](req, res) || {};
-    
+
     // Determine userType roughly based on URL or req.body, default to Passenger
     let userType = 'Passenger';
-    if(req.url.includes('rider') || req.url.includes('driver')) userType = 'Rider';
-    if(req.url.includes('admin')) userType = 'Admin';
+    if (req.url.includes('rider') || req.url.includes('driver')) userType = 'Rider';
+    if (req.url.includes('admin')) userType = 'Admin';
 
     const metadata = {
-      ipAddress: tokens['remote-addr'](req, res),
+      ipAddress: ipAddress,
       platform: userAgent.platform,
       os: userAgent.os,
       browser: userAgent.browser,
@@ -150,16 +202,18 @@ export const loggerMiddleware = morgan((tokens, req, res) => {
       city: location.city || 'Unknown',
       location: {
         type: 'Point',
-        coordinates: [location.lon || 0, location.lat || 0]
-      }
+        coordinates: [location.lon || 0, location.lat || 0],
+      },
     };
 
     AuthLog.findOneAndUpdate(
       { userId, userType },
-      { 
+      {
         $setOnInsert: { action: 'login', status: 'success' },
         $set: { metadata },
-        $push: { history: { $each: [{ timestamp: new Date(), ip: metadata.ipAddress }], $slice: -100 } } 
+        $push: {
+          history: { $each: [{ timestamp: new Date(), ip: metadata.ipAddress }], $slice: -100 },
+        },
       },
       { upsert: true, returnDocument: 'after' }
     ).catch(() => console.error('🔴 Error saving login history. Details omitted for security.'));
@@ -174,9 +228,9 @@ const deleteOldLogs = () => {
   const todayIST = new Date(`${year}-${month}-${day}`);
 
   files.forEach((file) => {
-    const match = file.match(/^(\d{4}-\d{2}-\d{2})\.log$/);
+    const match = file.match(/^(combined|error)-(\d{4}-\d{2}-\d{2})\.log$/);
     if (match) {
-      const fileDate = new Date(match[1]);
+      const fileDate = new Date(match[2]);
       const diffDays = (todayIST - fileDate) / (1000 * 60 * 60 * 24);
 
       if (diffDays > 30) {

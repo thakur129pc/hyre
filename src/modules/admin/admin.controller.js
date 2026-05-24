@@ -1,7 +1,13 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import Admin from './admin.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const createAdmin = async (req, res, next) => {
   const session = await mongoose.startSession();
@@ -163,6 +169,69 @@ export const deleteAdmin = async (req, res, next) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
+    next(error);
+  }
+};
+
+/**
+ * Reads logs from files based on type and date.
+ */
+const readLogsFromFile = (logType, date) => {
+  const filePath = path.join(__dirname, '../../../logs', `${logType}-${date}.log`);
+
+  if (!fs.existsSync(filePath)) {
+    throw new AppError(`Log file not found for type '${logType}' and date '${date}'.`, 404);
+  }
+
+  const fileContent = fs.readFileSync(filePath, 'utf-8');
+  if (!fileContent.trim()) {
+    return [];
+  }
+
+  return fileContent
+    .trim()
+    .split('\n')
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch (err) {
+        return line;
+      }
+    });
+};
+
+/**
+ * Fetch combined logs by date
+ */
+export const getCombinedLogs = async (req, res, next) => {
+  try {
+    const { date } = req.body;
+    const logs = readLogsFromFile('combined', date);
+
+    res.status(200).json({
+      status: true,
+      message: 'Combined logs fetched successfully.',
+      data: logs,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Fetch error logs by date
+ */
+export const getErrorLogs = async (req, res, next) => {
+  try {
+    const { date } = req.body;
+    const logs = readLogsFromFile('error', date);
+
+    res.status(200).json({
+      status: true,
+      message: 'Error logs fetched successfully.',
+      data: logs,
+    });
+  } catch (error) {
     next(error);
   }
 };

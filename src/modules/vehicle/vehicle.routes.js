@@ -2,6 +2,7 @@ import express from 'express';
 import validate from '../../core/middlewares/validate.middleware.js';
 import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
 import { createUploadMiddleware } from '../../core/middlewares/upload.middleware.js';
+import { sanitizationMiddleware } from '../../core/middlewares/sanitization.middleware.js';
 
 const { upload, validateUpload } = createUploadMiddleware({
   subFolder: 'vehicleCatalogIcons',
@@ -156,6 +157,7 @@ router.post(
   upload.single('icon'),
   validateUpload,
   parseVehicleSpecs,
+  sanitizationMiddleware,
   validate({ body: addVehicleSchema }),
   addVehicle
 );
@@ -172,6 +174,7 @@ router.post(
   upload.single('icon'),
   validateUpload,
   parseVehicleSpecs,
+  sanitizationMiddleware,
   validate({ params: vehicleParamSchema, body: editVehicleSchema }),
   editVehicle
 );

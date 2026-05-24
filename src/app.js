@@ -18,6 +18,7 @@ import {
 } from './core/middlewares/security.middleware.js';
 import verifyHmac from './core/middlewares/verifyHmac.middleware.js';
 import staticFileMiddleware from './core/middlewares/files.middleware.js';
+import { sanitizationMiddleware } from './core/middlewares/sanitization.middleware.js';
 
 // Import config and routes
 import { scheduleCronJobs } from './config/cron.js';
@@ -81,7 +82,7 @@ app.use(express.urlencoded({ extended: true, limit: payloadLimit }));
 const sanitizeObject = (obj) => {
   if (!obj || typeof obj !== 'object') return;
   Object.keys(obj).forEach((key) => {
-    if (key.startsWith('$') || key.includes('.')) {
+    if (key.startsWith('$') || key.includes('.') || key.includes('[$')) {
       delete obj[key];
     } else if (typeof obj[key] === 'object') {
       sanitizeObject(obj[key]);
@@ -91,8 +92,10 @@ const sanitizeObject = (obj) => {
 app.use((req, res, next) => {
   sanitizeObject(req.body);
   sanitizeObject(req.params);
+  sanitizeObject(req.query);
   next();
 });
+app.use(sanitizationMiddleware);
 
 // Custom Security Headers
 app.use((req, res, next) => {

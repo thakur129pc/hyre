@@ -1,13 +1,22 @@
 import express from 'express';
 import validate from '../../core/middlewares/validate.middleware.js';
 import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
+import { failedLoginLimiter } from '../../core/middlewares/limiter.middleware.js';
 import {
   createAdminSchema,
   editAdminSchema,
   statusParamSchema,
   loginSchema,
+  fetchLogsSchema,
 } from './admin.validation.js';
-import { createAdmin, editAdmin, toggleAdminStatus, deleteAdmin } from './admin.controller.js';
+import {
+  createAdmin,
+  editAdmin,
+  toggleAdminStatus,
+  deleteAdmin,
+  getCombinedLogs,
+  getErrorLogs,
+} from './admin.controller.js';
 import { login, logout } from './admin.auth.controller.js';
 
 const router = express.Router();
@@ -74,7 +83,7 @@ router.post(
  * @desc    Login admin & store accessToken in secure cookie
  * @access  Public
  */
-router.post('/auth/login', validate({ body: loginSchema }), login);
+router.post('/auth/login', failedLoginLimiter(), validate({ body: loginSchema }), login);
 
 /**
  * @route   POST /api/admins/auth/logout
@@ -82,5 +91,31 @@ router.post('/auth/login', validate({ body: loginSchema }), login);
  * @access  Private
  */
 router.post('/auth/logout', authenticateJWT, logout);
+
+/**
+ * @route   POST /api/admins/logs/combined
+ * @desc    Fetch combined logs by date
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/logs/combined',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ body: fetchLogsSchema }),
+  getCombinedLogs
+);
+
+/**
+ * @route   POST /api/admins/logs/error
+ * @desc    Fetch error logs by date
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/logs/error',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ body: fetchLogsSchema }),
+  getErrorLogs
+);
 
 export default router;

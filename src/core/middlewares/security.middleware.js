@@ -23,7 +23,7 @@ export const securityMiddleware = () => {
     },
     // Strict Transport Security
     hsts: {
-      maxAge: parseInt(HSTS_MAX_AGE, 10),
+      maxAge: parseInt(HSTS_MAX_AGE, 10) || 31536000,
       includeSubDomains: true,
       preload: true,
     },
