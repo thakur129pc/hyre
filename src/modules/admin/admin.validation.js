@@ -70,4 +70,6 @@ export const fetchLogsSchema = Joi.object({
       'any.required': 'Date is required.',
       'string.empty': 'Date is required.',
     }),
+  page: Joi.number().integer().min(1).optional().default(1),
+  limit: Joi.number().integer().min(1).max(500).optional().default(100),
 });

@@ -16,6 +16,7 @@ export const securityMiddleware = () => {
         scriptSrc: ["'self'"],
         styleSrc: ["'self'"],
         connectSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:'],
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
         baseUri: ["'none'"],

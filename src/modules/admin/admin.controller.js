@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import readline from 'readline';
 import Admin from './admin.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
 
@@ -174,44 +175,69 @@ export const deleteAdmin = async (req, res, next) => {
 };
 
 /**
- * Reads logs from files based on type and date.
+ * Reads logs from files using streams and readline for memory efficiency & event-loop friendliness.
+ * Supports pagination.
  */
-const readLogsFromFile = (logType, date) => {
-  const filePath = path.join(__dirname, '../../../logs', `${logType}-${date}.log`);
+const readLogsFromFilePaginated = (logType, date, page = 1, limit = 100) => {
+  return new Promise((resolve, reject) => {
+    const filePath = path.join(__dirname, '../../../logs', `${logType}-${date}.log`);
 
-  if (!fs.existsSync(filePath)) {
-    throw new AppError(`Log file not found for type '${logType}' and date '${date}'.`, 404);
-  }
+    if (!fs.existsSync(filePath)) {
+      return reject(
+        new AppError(`Log file not found for type '${logType}' and date '${date}'.`, 404)
+      );
+    }
 
-  const fileContent = fs.readFileSync(filePath, 'utf-8');
-  if (!fileContent.trim()) {
-    return [];
-  }
-
-  return fileContent
-    .trim()
-    .split('\n')
-    .map((line) => {
-      try {
-        return JSON.parse(line);
-      } catch (err) {
-        return line;
-      }
+    const instream = fs.createReadStream(filePath);
+    const rl = readline.createInterface({
+      input: instream,
+      terminal: false,
     });
+
+    const logs = [];
+    let lineCount = 0;
+    const startLine = (page - 1) * limit;
+    const endLine = page * limit;
+
+    rl.on('line', (line) => {
+      if (lineCount >= startLine && lineCount < endLine) {
+        try {
+          logs.push(JSON.parse(line));
+        } catch (err) {
+          logs.push(line);
+        }
+      }
+      lineCount++;
+    });
+
+    rl.on('close', () => {
+      resolve({
+        logs,
+        totalLogs: lineCount,
+        page,
+        limit,
+        totalPages: Math.ceil(lineCount / limit),
+      });
+    });
+
+    rl.on('error', (err) => {
+      reject(err);
+    });
+  });
 };
 
 /**
- * Fetch combined logs by date
+ * Fetch combined logs by date (with pagination)
  */
 export const getCombinedLogs = async (req, res, next) => {
   try {
-    const { date } = req.body;
-    const logs = readLogsFromFile('combined', date);
+    const { date, page, limit } = req.body;
+    const result = await readLogsFromFilePaginated('combined', date, page, limit);
 
     res.status(200).json({
       status: true,
       message: 'Combined logs fetched successfully.',
-      data: logs,
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -219,17 +245,17 @@ export const getCombinedLogs = async (req, res, next) => {
 };
 
 /**
- * Fetch error logs by date
+ * Fetch error logs by date (with pagination)
  */
 export const getErrorLogs = async (req, res, next) => {
   try {
-    const { date } = req.body;
-    const logs = readLogsFromFile('error', date);
+    const { date, page, limit } = req.body;
+    const result = await readLogsFromFilePaginated('error', date, page, limit);
 
     res.status(200).json({
       status: true,
       message: 'Error logs fetched successfully.',
-      data: logs,
+      data: result,
     });
   } catch (error) {
     next(error);

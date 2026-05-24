@@ -26,7 +26,9 @@ const errorMiddleware = (err, req, res, next) => {
   }
 
   if (err.name === 'ValidationError') {
-    message = Object.values(err.errors).map((val) => val.message).join(', ');
+    message = Object.values(err.errors)
+      .map((val) => val.message)
+      .join(', ');
     statusCode = 400;
   }
 
@@ -52,7 +54,7 @@ const errorMiddleware = (err, req, res, next) => {
 
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     message = 'Invalid JSON. Please check your request payload.';
-    statusCode = 401;
+    statusCode = 400;
   }
 
   if (err instanceof multer.MulterError) {

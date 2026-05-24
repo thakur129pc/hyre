@@ -15,8 +15,8 @@ const staticFileMiddleware = (publicDir = 'public/uploads') => {
       res.setHeader('Content-Security-Policy', "default-src 'self'");
       // Prevent MIME type sniffing
       res.setHeader('X-Content-Type-Options', 'nosniff');
-      // Disable caching for sensitive files
-      res.setHeader('Cache-Control', 'no-store');
+      // Public caching for non-sensitive static uploaded files (e.g., 1 day)
+      res.setHeader('Cache-Control', 'public, max-age=86400');
     },
   });
 };

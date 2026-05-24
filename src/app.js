@@ -60,7 +60,17 @@ deleteLogsCronJobs();
 const allowedOrigins = TRUSTED_ORIGINS ? TRUSTED_ORIGINS.split(',') : [];
 app.use(
   cors({
-    origin: NODE_ENV === 'production' ? allowedOrigins : '*',
+    origin: (origin, callback) => {
+      if (NODE_ENV !== 'production') {
+        callback(null, origin || '*');
+      } else {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    },
     credentials: true,
     methods: ['POST', 'GET', 'OPTIONS'],
     preflightContinue: false,
@@ -118,15 +128,18 @@ sensitiveApis.forEach((api) => {
 });
 
 // HMAC Payload Integrity & Replay Verification
-// app.use((req, res, next) => {
-//   if (req.is('multipart/form-data')) return next();
-//   if (req.url.startsWith('/uploads')) return next();
-//   if (req.url.includes('/fetch-logs')) return next();
-//   if (req.url.includes('/admin')) return next(); // Skip admin utility for now
+// HMAC Payload Integrity & Replay Verification
+app.use((req, res, next) => {
+  // Skip static uploads and health check
+  if (req.url.startsWith('/uploads') || req.url.includes('/health')) return next();
+  // Skip multipart/form-data requests globally (handled locally on routes after Multer parses fields)
+  if (req.is('multipart/form-data')) return next();
+  // Skip admin and logs utility routes
+  if (req.url.includes('/admin') || req.url.includes('/logs')) return next();
 
-//   // Default: Require HMAC + Timestamp for other routes
-//   return verifyHmac(req, res, next);
-// });
+  // Default: Require HMAC + Timestamp for other routes
+  return verifyHmac(req, res, next);
+});
 
 // User IP details middleware
 app.use(userInfoMiddleware);

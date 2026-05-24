@@ -10,6 +10,27 @@ import { AppError } from '../../core/utils/appError.util.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Helper to safely delete local uploads without path traversal vulnerabilities
+const safeUnlink = (fileUrlPath) => {
+  if (!fileUrlPath || typeof fileUrlPath !== 'string') return;
+  if (!fileUrlPath.startsWith('/uploads/')) return;
+
+  try {
+    const relativePath = fileUrlPath.startsWith('/') ? fileUrlPath.slice(1) : fileUrlPath;
+    const resolvedPath = path.resolve(path.join(__dirname, '../../../public', relativePath));
+    const baseUploadsDir = path.resolve(path.join(__dirname, '../../../public/uploads'));
+
+    // Ensure target path is strictly within the public/uploads directory
+    if (resolvedPath.startsWith(baseUploadsDir)) {
+      if (fs.existsSync(resolvedPath)) {
+        fs.unlinkSync(resolvedPath);
+      }
+    }
+  } catch (err) {
+    // ignore unlink errors
+  }
+};
+
 /**
  * Add Vehicle Type API
  * Creates a base vehicle category like car, rickshaw, two-wheeler.
@@ -299,10 +320,6 @@ export const editVehicleType = async (req, res, next) => {
       }
     }
 
-    if (description !== undefined) {
-      vehicleType.description = description;
-    }
-
     await vehicleType.save({ session });
     await session.commitTransaction();
     session.endSession();
@@ -404,7 +421,6 @@ export const editVehicleSubType = async (req, res, next) => {
 
     if (subTypeName) vehicleSubType.subTypeName = currentSubTypeName;
     if (typeId) vehicleSubType.typeId = typeId;
-    if (description !== undefined) vehicleSubType.description = description;
 
     await vehicleSubType.save({ session });
     await session.commitTransaction();
@@ -561,15 +577,7 @@ export const editVehicle = async (req, res, next) => {
 
     // Clean up old file if a new file was uploaded successfully and there was an old file
     if (newFileUploaded && oldIconUrl) {
-      const relativePath = oldIconUrl.startsWith('/') ? oldIconUrl.slice(1) : oldIconUrl;
-      const oldFilePath = path.join(__dirname, '../../../public', relativePath);
-      if (fs.existsSync(oldFilePath)) {
-        try {
-          fs.unlinkSync(oldFilePath);
-        } catch (err) {
-          // ignore cleanup delete errors
-        }
-      }
+      safeUnlink(oldIconUrl);
     }
 
     res.status(200).json({
