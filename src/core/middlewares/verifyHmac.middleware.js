@@ -1,9 +1,27 @@
 import crypto from 'crypto';
 import { AppError } from '../utils/appError.util.js';
 
+const safeStringifyValue = (val) => {
+  if (val === undefined || val === null) return '';
+  if (typeof val === 'object') {
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return '';
+    }
+  }
+  try {
+    return String(val);
+  } catch {
+    return '';
+  }
+};
+
 const formDataToString = (body, files, file) => {
   const entries = [];
-  Object.keys(body).forEach((key) => entries.push(`${key}=${body[key]}`));
+  Object.keys(body).forEach((key) => {
+    entries.push(`${key}=${safeStringifyValue(body[key])}`);
+  });
 
   if (files) {
     Object.keys(files).forEach((key) => {

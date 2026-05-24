@@ -2,6 +2,7 @@ import express from 'express';
 import adminRoutes from '../modules/admin/admin.routes.js';
 import passwordRoutes from '../modules/password/password.routes.js';
 import vehicleRoutes from '../modules/vehicle/vehicle.routes.js';
+import cityRoutes from '../modules/city/city.routes.js';
 
 const router = express.Router();
 
@@ -13,5 +14,8 @@ router.use('/password', passwordRoutes);
 
 // Base route: /api/vehicles
 router.use('/vehicles', vehicleRoutes);
+
+// Base route: /api/cities
+router.use('/cities', cityRoutes);
 
 export default router;
