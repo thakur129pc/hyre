@@ -47,7 +47,7 @@ export const addVehicleSchema = Joi.object({
     'number.base': 'Max passenger capacity must be a valid number.',
     'any.required': 'Max passenger capacity is required.',
   }),
-  iconUrl: Joi.string().trim().uri().optional().allow(''),
+  iconUrl: Joi.string().trim().optional().allow(''),
   vehicleSpecs: Joi.object({
     topSpeedPerKm: Joi.number().min(0).optional(),
     batteryCapacityKwh: Joi.number().min(0).optional(),
@@ -90,7 +90,7 @@ export const editVehicleSchema = Joi.object({
   description: Joi.string().trim().max(500).optional().allow(''),
   numberOfWheels: Joi.number().integer().min(2).max(10).optional(),
   maxPassengerCapacity: Joi.number().integer().min(1).max(100).optional(),
-  iconUrl: Joi.string().trim().uri().optional().allow(''),
+  iconUrl: Joi.string().trim().optional().allow(''),
   vehicleSpecs: Joi.object({
     topSpeedPerKm: Joi.number().min(0).optional(),
     batteryCapacityKwh: Joi.number().min(0).optional(),

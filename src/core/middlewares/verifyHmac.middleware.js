@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { AppError } from '../utils/appError.util.js';
 
-const formDataToString = (body, files) => {
+const formDataToString = (body, files, file) => {
   const entries = [];
   Object.keys(body).forEach((key) => entries.push(`${key}=${body[key]}`));
 
@@ -15,6 +15,10 @@ const formDataToString = (body, files) => {
           entries.push(`${fieldName}=${fileName}`);
         });
     });
+  }
+
+  if (file) {
+    entries.push(`${file.fieldname}=${file.originalname}`);
   }
 
   entries.sort((a, b) => a.localeCompare(b));
@@ -48,7 +52,7 @@ const verifyHmac = (req, res, next) => {
     let payloadString = '';
 
     if (req.is('multipart/form-data')) {
-      payloadString = formDataToString(req.body, req.files);
+      payloadString = formDataToString(req.body, req.files, req.file);
     } else if (req.body && Object.keys(req.body).length > 0) {
       payloadString = JSON.stringify(req.body);
     }

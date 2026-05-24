@@ -1,6 +1,16 @@
 import express from 'express';
 import validate from '../../core/middlewares/validate.middleware.js';
 import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
+import { createUploadMiddleware } from '../../core/middlewares/upload.middleware.js';
+
+const { upload, validateUpload } = createUploadMiddleware({
+  subFolder: 'vehicleCatalogIcons',
+  allowedTypes: {
+    'image/jpeg': ['jpg', 'jpeg'],
+    'image/png': ['png'],
+  },
+  maxSize: 5 * 1024 * 1024,
+});
 import {
   addVehicleTypeSchema,
   addVehicleSubTypeSchema,
@@ -26,6 +36,17 @@ import {
   editVehicle,
   toggleVehicleStatus,
 } from './vehicle.controller.js';
+
+const parseVehicleSpecs = (req, res, next) => {
+  if (req.body.vehicleSpecs && typeof req.body.vehicleSpecs === 'string') {
+    try {
+      req.body.vehicleSpecs = JSON.parse(req.body.vehicleSpecs);
+    } catch (err) {
+      // Let it remain a string so Joi throws a validation error
+    }
+  }
+  next();
+};
 
 const router = express.Router();
 
@@ -132,6 +153,9 @@ router.post(
   '/add',
   authenticateJWT,
   authorizeRoles('super_admin'),
+  upload.single('icon'),
+  validateUpload,
+  parseVehicleSpecs,
   validate({ body: addVehicleSchema }),
   addVehicle
 );
@@ -145,6 +169,9 @@ router.post(
   '/edit/:id',
   authenticateJWT,
   authorizeRoles('super_admin'),
+  upload.single('icon'),
+  validateUpload,
+  parseVehicleSpecs,
   validate({ params: vehicleParamSchema, body: editVehicleSchema }),
   editVehicle
 );

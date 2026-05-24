@@ -7,7 +7,7 @@ const staticFileMiddleware = (publicDir = 'public/uploads') => {
   const __dirname = dirname(__filename);
 
   // Resolve correctly from src/core/middlewares
-  const resolvedPath = join(__dirname, '../../../../', publicDir);
+  const resolvedPath = join(__dirname, '../../../', publicDir);
 
   return express.static(join(resolvedPath), {
     setHeaders: (res) => {

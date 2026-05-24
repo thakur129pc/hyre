@@ -1,8 +1,14 @@
 import mongoose from 'mongoose';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import VehicleType from './vehicleType.model.js';
 import VehicleSubType from './vehicleSubType.model.js';
 import Vehicle from './vehicle.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Add Vehicle Type API
@@ -156,6 +162,11 @@ export const addVehicle = async (req, res, next) => {
       );
     }
 
+    // Handle dynamic icon upload path
+    const resolvedIconUrl = req.file
+      ? `/uploads/vehicleCatalogIcons/${req.file.filename}`
+      : iconUrl || '';
+
     const newVehicle = await Vehicle.create(
       [
         {
@@ -166,7 +177,7 @@ export const addVehicle = async (req, res, next) => {
           description,
           numberOfWheels,
           maxPassengerCapacity,
-          iconUrl,
+          iconUrl: resolvedIconUrl,
           vehicleSpecs,
         },
       ],
@@ -184,6 +195,16 @@ export const addVehicle = async (req, res, next) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
+
+    // Secure Cleanup: Delete newly uploaded file if database/validation operation fails
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkErr) {
+        // ignore
+      }
+    }
+
     next(error);
   }
 };
@@ -442,6 +463,7 @@ export const editVehicle = async (req, res, next) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
+  let newFileUploaded = false;
   try {
     const { id } = req.params;
     const {
@@ -507,6 +529,8 @@ export const editVehicle = async (req, res, next) => {
       }
     }
 
+    const oldIconUrl = vehicle.iconUrl;
+
     // Apply updates
     if (vehicleTypeId) vehicle.vehicleTypeId = vehicleTypeId;
     if (vehicleSubTypeId) vehicle.vehicleSubTypeId = vehicleSubTypeId;
@@ -515,7 +539,14 @@ export const editVehicle = async (req, res, next) => {
     if (description !== undefined) vehicle.description = description;
     if (numberOfWheels) vehicle.numberOfWheels = numberOfWheels;
     if (maxPassengerCapacity) vehicle.maxPassengerCapacity = maxPassengerCapacity;
-    if (iconUrl !== undefined) vehicle.iconUrl = iconUrl;
+
+    // Handle dynamic icon upload
+    if (req.file) {
+      newFileUploaded = true;
+      vehicle.iconUrl = `/uploads/vehicleCatalogIcons/${req.file.filename}`;
+    } else if (iconUrl !== undefined) {
+      vehicle.iconUrl = iconUrl;
+    }
 
     if (vehicleSpecs) {
       vehicle.vehicleSpecs = {
@@ -528,6 +559,19 @@ export const editVehicle = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
+    // Clean up old file if a new file was uploaded successfully and there was an old file
+    if (newFileUploaded && oldIconUrl) {
+      const relativePath = oldIconUrl.startsWith('/') ? oldIconUrl.slice(1) : oldIconUrl;
+      const oldFilePath = path.join(__dirname, '../../../public', relativePath);
+      if (fs.existsSync(oldFilePath)) {
+        try {
+          fs.unlinkSync(oldFilePath);
+        } catch (err) {
+          // ignore cleanup delete errors
+        }
+      }
+    }
+
     res.status(200).json({
       status: true,
       message: 'Vehicle catalog entry updated successfully.',
@@ -536,6 +580,16 @@ export const editVehicle = async (req, res, next) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
+
+    // Secure Cleanup: Delete newly uploaded file if database/validation operation fails
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkErr) {
+        // ignore
+      }
+    }
+
     next(error);
   }
 };
