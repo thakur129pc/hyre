@@ -8,6 +8,8 @@ import Admin from './admin.model.js';
 import AuditLog from '../audit/auditLog.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
 import { logAudit } from '../../core/utils/auditLogger.util.js';
+import Price from '../price/price.model.js';
+import Promo from '../promo/promo.model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

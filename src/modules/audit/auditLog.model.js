@@ -44,6 +44,7 @@ const auditLogSchema = new mongoose.Schema(
         'Rider',
         'Passenger',
         'Price',
+        'Promo',
       ],
     },
     changes: {

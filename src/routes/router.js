@@ -4,6 +4,7 @@ import passwordRoutes from '../modules/password/password.routes.js';
 import vehicleRoutes from '../modules/vehicle/vehicle.routes.js';
 import cityRoutes from '../modules/city/city.routes.js';
 import priceRoutes from '../modules/price/price.routes.js';
+import promoRoutes from '../modules/promo/promo.routes.js';
 
 const router = express.Router();
 
@@ -21,5 +22,8 @@ router.use('/cities', cityRoutes);
 
 // Base route: /api/prices
 router.use('/prices', priceRoutes);
+
+// Base route: /api/promos
+router.use('/promos', promoRoutes);
 
 export default router;

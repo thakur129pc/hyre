@@ -2,7 +2,6 @@ import morgan from 'morgan';
 import useragent from 'express-useragent';
 import fs from 'fs';
 import path from 'path';
-import cron from 'node-cron';
 import { fileURLToPath } from 'url';
 import AuthLog from '../../modules/auth/authLog.model.js';
 
@@ -175,7 +174,7 @@ export const loggerMiddleware = morgan((tokens, req, res) => {
   writeLogToFile(stringifiedLog, isError);
 });
 
-const deleteOldLogs = async () => {
+export const deleteOldLogs = async () => {
   console.log('🔵 Running daily log cleanup......');
 
   // 1. Database AuthLog cleanup (delete older than 90 days)
@@ -208,11 +207,5 @@ const deleteOldLogs = async () => {
         });
       }
     }
-  });
-};
-
-export const deleteLogsCronJobs = () => {
-  cron.schedule('0 9 * * *', () => {
-    deleteOldLogs();
   });
 };

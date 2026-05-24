@@ -10,7 +10,6 @@ import userInfoMiddleware from './core/middlewares/info.middleware.js';
 import {
   loggerMiddleware,
   responseCaptureMiddleware,
-  deleteLogsCronJobs,
 } from './core/middlewares/logger.middleware.js';
 import {
   securityMiddleware,
@@ -21,7 +20,7 @@ import staticFileMiddleware from './core/middlewares/files.middleware.js';
 import { sanitizationMiddleware } from './core/middlewares/sanitization.middleware.js';
 
 // Import config and routes
-import { scheduleCronJobs } from './config/cron.js';
+import { scheduleCronJobs } from './config/cron.config.js';
 import routes from './routes/router.js';
 
 dotenv.config({ quiet: true });
@@ -52,9 +51,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Cron jobs (global and log deletion)
+// Cron jobs (global logs cleanup and others)
 scheduleCronJobs();
-deleteLogsCronJobs();
 
 // CORS Configuration
 const allowedOrigins = TRUSTED_ORIGINS ? TRUSTED_ORIGINS.split(',') : [];

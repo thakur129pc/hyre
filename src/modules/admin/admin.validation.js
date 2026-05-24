@@ -106,6 +106,16 @@ export const fetchAuditLogsSchema = Joi.object({
     'string.length': 'Invalid Entity ID format.',
   }),
   entityType: Joi.string()
-    .valid('Admin', 'City', 'Vehicle', 'VehicleType', 'VehicleSubType', 'Rider', 'Passenger')
+    .valid(
+      'Admin',
+      'City',
+      'Vehicle',
+      'VehicleType',
+      'VehicleSubType',
+      'Rider',
+      'Passenger',
+      'Price',
+      'Promo'
+    )
     .optional(),
 });

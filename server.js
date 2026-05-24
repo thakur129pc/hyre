@@ -2,7 +2,7 @@ import fs from 'fs';
 import http from 'http';
 import https from 'https';
 import dotenv from 'dotenv';
-import connectDB from './src/config/db.js';
+import connectDB from './src/config/db.config.js';
 import app from './src/app.js';
 import { handleServerError } from './src/core/utils/handleServerError.util.js';
 import { AppError } from './src/core/utils/appError.util.js';
