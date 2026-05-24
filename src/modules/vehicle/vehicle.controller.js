@@ -6,6 +6,7 @@ import VehicleType from './vehicleType.model.js';
 import VehicleSubType from './vehicleSubType.model.js';
 import Vehicle from './vehicle.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
+import { logAudit } from '../../core/utils/auditLogger.util.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,6 +60,15 @@ export const addVehicleType = async (req, res, next) => {
       ],
       { session }
     );
+
+    await logAudit({
+      req,
+      action: 'CREATE',
+      entityId: newType[0]._id,
+      entityType: 'VehicleType',
+      after: newType[0].toObject(),
+      session,
+    });
 
     await session.commitTransaction();
     session.endSession();
@@ -114,6 +124,15 @@ export const addVehicleSubType = async (req, res, next) => {
       ],
       { session }
     );
+
+    await logAudit({
+      req,
+      action: 'CREATE',
+      entityId: newSubType[0]._id,
+      entityType: 'VehicleSubType',
+      after: newSubType[0].toObject(),
+      session,
+    });
 
     await session.commitTransaction();
     session.endSession();
@@ -204,6 +223,15 @@ export const addVehicle = async (req, res, next) => {
       ],
       { session }
     );
+
+    await logAudit({
+      req,
+      action: 'CREATE',
+      entityId: newVehicle[0]._id,
+      entityType: 'Vehicle',
+      after: newVehicle[0].toObject(),
+      session,
+    });
 
     await session.commitTransaction();
     session.endSession();
@@ -306,6 +334,8 @@ export const editVehicleType = async (req, res, next) => {
       throw new AppError('Vehicle type not found.', 404);
     }
 
+    const beforeState = vehicleType.toObject();
+
     if (typeName) {
       const normalizedTypeName = typeName.toLowerCase().trim();
       if (normalizedTypeName !== vehicleType.typeName) {
@@ -321,6 +351,17 @@ export const editVehicleType = async (req, res, next) => {
     }
 
     await vehicleType.save({ session });
+
+    await logAudit({
+      req,
+      action: 'UPDATE',
+      entityId: vehicleType._id,
+      entityType: 'VehicleType',
+      before: beforeState,
+      after: vehicleType.toObject(),
+      session,
+    });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -351,10 +392,23 @@ export const toggleVehicleTypeStatus = async (req, res, next) => {
       throw new AppError('Vehicle type not found.', 404);
     }
 
+    const beforeState = vehicleType.toObject();
+
     const nextStatus = vehicleType.status === 'active' ? 'inactive' : 'active';
     vehicleType.status = nextStatus;
 
     await vehicleType.save({ session });
+
+    await logAudit({
+      req,
+      action: 'TOGGLE_STATUS',
+      entityId: vehicleType._id,
+      entityType: 'VehicleType',
+      before: beforeState,
+      after: vehicleType.toObject(),
+      session,
+    });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -385,6 +439,8 @@ export const editVehicleSubType = async (req, res, next) => {
     if (!vehicleSubType) {
       throw new AppError('Vehicle subtype not found.', 404);
     }
+
+    const beforeState = vehicleSubType.toObject();
 
     const currentTypeId = typeId || vehicleSubType.typeId;
     const currentSubTypeName = subTypeName
@@ -423,6 +479,17 @@ export const editVehicleSubType = async (req, res, next) => {
     if (typeId) vehicleSubType.typeId = typeId;
 
     await vehicleSubType.save({ session });
+
+    await logAudit({
+      req,
+      action: 'UPDATE',
+      entityId: vehicleSubType._id,
+      entityType: 'VehicleSubType',
+      before: beforeState,
+      after: vehicleSubType.toObject(),
+      session,
+    });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -453,10 +520,23 @@ export const toggleVehicleSubTypeStatus = async (req, res, next) => {
       throw new AppError('Vehicle subtype not found.', 404);
     }
 
+    const beforeState = vehicleSubType.toObject();
+
     const nextStatus = vehicleSubType.status === 'active' ? 'inactive' : 'active';
     vehicleSubType.status = nextStatus;
 
     await vehicleSubType.save({ session });
+
+    await logAudit({
+      req,
+      action: 'TOGGLE_STATUS',
+      entityId: vehicleSubType._id,
+      entityType: 'VehicleSubType',
+      before: beforeState,
+      after: vehicleSubType.toObject(),
+      session,
+    });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -498,6 +578,8 @@ export const editVehicle = async (req, res, next) => {
     if (!vehicle) {
       throw new AppError('Vehicle catalog entry not found.', 404);
     }
+
+    const beforeState = vehicle.toObject();
 
     const targetTypeId = vehicleTypeId || vehicle.vehicleTypeId;
     const targetSubTypeId = vehicleSubTypeId || vehicle.vehicleSubTypeId;
@@ -572,6 +654,17 @@ export const editVehicle = async (req, res, next) => {
     }
 
     await vehicle.save({ session });
+
+    await logAudit({
+      req,
+      action: 'UPDATE',
+      entityId: vehicle._id,
+      entityType: 'Vehicle',
+      before: beforeState,
+      after: vehicle.toObject(),
+      session,
+    });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -617,10 +710,23 @@ export const toggleVehicleStatus = async (req, res, next) => {
       throw new AppError('Vehicle catalog entry not found.', 404);
     }
 
+    const beforeState = vehicle.toObject();
+
     const nextStatus = vehicle.status === 'active' ? 'inactive' : 'active';
     vehicle.status = nextStatus;
 
     await vehicle.save({ session });
+
+    await logAudit({
+      req,
+      action: 'TOGGLE_STATUS',
+      entityId: vehicle._id,
+      entityType: 'Vehicle',
+      before: beforeState,
+      after: vehicle.toObject(),
+      session,
+    });
+
     await session.commitTransaction();
     session.endSession();
 

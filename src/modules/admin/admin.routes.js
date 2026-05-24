@@ -8,6 +8,7 @@ import {
   statusParamSchema,
   loginSchema,
   fetchLogsSchema,
+  fetchAuditLogsSchema,
 } from './admin.validation.js';
 import {
   createAdmin,
@@ -16,6 +17,7 @@ import {
   deleteAdmin,
   getCombinedLogs,
   getErrorLogs,
+  getAuditLogs,
 } from './admin.controller.js';
 import { login, logout } from './admin.auth.controller.js';
 
@@ -116,6 +118,19 @@ router.post(
   authorizeRoles('super_admin'),
   validate({ body: fetchLogsSchema }),
   getErrorLogs
+);
+
+/**
+ * @route   POST /api/admins/logs/audit
+ * @desc    Fetch database audit logs with paging and filters
+ * @access  Private (super_admin only)
+ */
+router.post(
+  '/logs/audit',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ body: fetchAuditLogsSchema }),
+  getAuditLogs
 );
 
 export default router;

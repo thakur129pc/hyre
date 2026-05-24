@@ -1,0 +1,106 @@
+import express from 'express';
+import validate from '../../core/middlewares/validate.middleware.js';
+import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
+import { createUploadMiddleware } from '../../core/middlewares/upload.middleware.js';
+import verifyHmac from '../../core/middlewares/verifyHmac.middleware.js';
+import {
+  createCitySchema,
+  editCitySchema,
+  fetchCitiesSchema,
+  cityParamSchema,
+} from './city.validation.js';
+import {
+  createCity,
+  editCity,
+  toggleCityStatus,
+  getCities,
+  getCityById,
+} from './city.controller.js';
+
+const { upload, validateUpload } = createUploadMiddleware({
+  subFolder: 'cityIcons',
+  allowedTypes: {
+    'image/jpeg': ['jpg', 'jpeg'],
+    'image/png': ['png'],
+  },
+  maxSize: 5 * 1024 * 1024,
+});
+
+// Middleware to parse stringified JSON fields from multipart request body
+const parseCityMultipartFields = (req, res, next) => {
+  const jsonFields = [
+    'servicedPincodes',
+    'coordinates',
+    'allowedVehicleTypes',
+    'activeVehicleTypes',
+    'city_config',
+  ];
+  for (const field of jsonFields) {
+    if (req.body[field] && typeof req.body[field] === 'string') {
+      try {
+        req.body[field] = JSON.parse(req.body[field]);
+      } catch {
+        // Let it remain a string so Joi validation catches it
+      }
+    }
+  }
+  next();
+};
+
+const router = express.Router();
+
+// --- PUBLIC/AUTHENTICATED CITY QUERIES ---
+// Accessible to any logged in user (Admins, Passenger, Riders)
+router.post('/get-cities', authenticateJWT, validate({ body: fetchCitiesSchema }), getCities);
+
+router.route('/:id').post(authenticateJWT, validate({ params: cityParamSchema }), getCityById);
+
+router.post(
+  '/get-city-by-id',
+  authenticateJWT,
+  (req, res, next) => {
+    if (req.body.id) {
+      req.params.id = req.body.id;
+    }
+    next();
+  },
+  validate({ params: cityParamSchema }),
+  getCityById
+);
+
+// --- ADMINISTRATIVE CITY OPERATIONS ---
+// Restricted to super_admin only
+
+router.post(
+  '/create',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  upload.single('icon'),
+  validateUpload,
+  // verifyHmac,
+  parseCityMultipartFields,
+  validate({ body: createCitySchema }),
+  createCity
+);
+
+router.post(
+  '/edit/:id',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  upload.single('icon'),
+  validateUpload,
+  // verifyHmac,
+  parseCityMultipartFields,
+  validate({ params: cityParamSchema, body: editCitySchema }),
+  editCity
+);
+
+router.post(
+  '/toggle-status/:id',
+  authenticateJWT,
+  authorizeRoles('super_admin'),
+  validate({ params: cityParamSchema }),
+  toggleCityStatus
+);
+
+export default router;

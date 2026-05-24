@@ -6,6 +6,7 @@ import Passenger from '../passenger/passenger.model.js';
 import Rider from '../rider/rider.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
 import sendMail from '../../core/utils/sendMail.util.js';
+import { logAudit } from '../../core/utils/auditLogger.util.js';
 
 /**
  * Resolves the appropriate Mongoose model based on the userType.
@@ -77,6 +78,15 @@ export const changePassword = async (req, res, next) => {
 
     user.password = hashedPassword;
     await user.save({ session });
+
+    // Log password change action
+    await logAudit({
+      req,
+      action: 'PASSWORD_CHANGE',
+      entityId: user._id,
+      entityType: req.userType,
+      session,
+    });
 
     await session.commitTransaction();
     session.endSession();
@@ -156,6 +166,17 @@ export const sendForgotPasswordLink = async (req, res, next) => {
       );
     }
 
+    // Log the reset request event
+    await logAudit({
+      req,
+      action: 'PASSWORD_RESET_REQUEST',
+      entityId: user._id,
+      entityType: userType,
+      actorId: user._id,
+      actorType: userType,
+      session,
+    });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -214,6 +235,17 @@ export const resetPassword = async (req, res, next) => {
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ session });
+
+    // Log the successful password reset event
+    await logAudit({
+      req,
+      action: 'PASSWORD_RESET',
+      entityId: user._id,
+      entityType: userType,
+      actorId: user._id,
+      actorType: userType,
+      session,
+    });
 
     await session.commitTransaction();
     session.endSession();

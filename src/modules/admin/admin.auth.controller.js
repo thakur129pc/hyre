@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Admin from './admin.model.js';
 import { AppError } from '../../core/utils/appError.util.js';
+import { logAudit } from '../../core/utils/auditLogger.util.js';
 
 /**
  * Admin Login API
@@ -48,6 +49,17 @@ export const login = async (req, res, next) => {
     const adminResponse = admin.toObject();
     delete adminResponse.password;
 
+    // Log the successful login event
+    await logAudit({
+      req,
+      action: 'LOGIN',
+      entityId: admin._id,
+      entityType: 'Admin',
+      actorId: admin._id,
+      actorType: 'Admin',
+      after: adminResponse,
+    });
+
     res.status(200).json({
       status: true,
       message: 'Logged in successfully.',
@@ -73,6 +85,14 @@ export const logout = async (req, res, next) => {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'strict',
+    });
+
+    // Log the logout event
+    await logAudit({
+      req,
+      action: 'LOGOUT',
+      entityId: req.user.id,
+      entityType: 'Admin',
     });
 
     res.status(200).json({
