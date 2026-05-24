@@ -10,6 +10,11 @@ import { logAudit } from '../../core/utils/auditLogger.util.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Helper to escape special characters in regex queries to prevent RegExp injection crashes
+const escapeRegex = (string) => {
+  return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
+
 // Helper to safely delete local uploads without path traversal vulnerabilities
 const safeUnlink = (fileUrlPath) => {
   if (!fileUrlPath || typeof fileUrlPath !== 'string') return;
@@ -61,8 +66,8 @@ export const createCity = async (req, res, next) => {
 
     // Check for case-insensitive duplicate city in the same state
     const existingCity = await City.findOne({
-      name: { $regex: new RegExp(`^${normalizedName}$`, 'i') },
-      state: { $regex: new RegExp(`^${normalizedState}$`, 'i') },
+      name: { $regex: new RegExp(`^${escapeRegex(normalizedName)}$`, 'i') },
+      state: { $regex: new RegExp(`^${escapeRegex(normalizedState)}$`, 'i') },
     }).session(session);
 
     if (existingCity) {
@@ -83,6 +88,15 @@ export const createCity = async (req, res, next) => {
           'One or more referenced vehicle types do not exist in the catalog.',
           400
         );
+      }
+    }
+
+    // Verify activeVehicleTypes is a subset of allowed vehicle types
+    const activeSet = new Set(activeVehicleTypes || []);
+    const allowedSet = new Set(allowedVehicleTypes || []);
+    for (const activeId of activeSet) {
+      if (!allowedSet.has(activeId)) {
+        throw new AppError('Active vehicle types must be a subset of allowed vehicle types.', 400);
       }
     }
 
@@ -180,8 +194,8 @@ export const editCity = async (req, res, next) => {
 
       if (isNameChanged || isStateChanged) {
         const duplicate = await City.findOne({
-          name: { $regex: new RegExp(`^${targetName}$`, 'i') },
-          state: { $regex: new RegExp(`^${targetState}$`, 'i') },
+          name: { $regex: new RegExp(`^${escapeRegex(targetName)}$`, 'i') },
+          state: { $regex: new RegExp(`^${escapeRegex(targetState)}$`, 'i') },
           _id: { $ne: id },
         }).session(session);
 
@@ -202,6 +216,23 @@ export const editCity = async (req, res, next) => {
           'One or more referenced vehicle types do not exist in the catalog.',
           400
         );
+      }
+    }
+
+    // Verify activeVehicleTypes is a subset of allowed vehicle types
+    const targetAllowed =
+      allowedVehicleTypes !== undefined
+        ? allowedVehicleTypes
+        : city.allowedVehicleTypes.map((id) => id.toString());
+    const targetActive =
+      activeVehicleTypes !== undefined
+        ? activeVehicleTypes
+        : city.activeVehicleTypes.map((id) => id.toString());
+
+    const allowedSet = new Set(targetAllowed);
+    for (const activeId of targetActive) {
+      if (!allowedSet.has(activeId)) {
+        throw new AppError('Active vehicle types must be a subset of allowed vehicle types.', 400);
       }
     }
 
@@ -330,7 +361,7 @@ export const getCities = async (req, res, next) => {
     const query = {};
 
     if (state) {
-      query.state = { $regex: new RegExp(state.trim(), 'i') };
+      query.state = { $regex: new RegExp(escapeRegex(state.trim()), 'i') };
     }
     if (status) {
       query.status = status;
