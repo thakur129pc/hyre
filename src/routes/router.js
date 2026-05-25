@@ -7,6 +7,7 @@ import priceRoutes from '../modules/price/price.routes.js';
 import promoRoutes from '../modules/promo/promo.routes.js';
 import auditRoutes from '../modules/audit/audit.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
+import languageRoutes from '../modules/language/language.routes.js';
 
 const router = express.Router();
 
@@ -33,5 +34,8 @@ router.use('/audit-logs', auditRoutes);
 
 // Base route: /api/auth-logs
 router.use('/auth-logs', authRoutes);
+
+// Base route: /api/languages
+router.use('/languages', languageRoutes);
 
 export default router;
