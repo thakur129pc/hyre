@@ -8,6 +8,7 @@ import promoRoutes from '../modules/promo/promo.routes.js';
 import auditRoutes from '../modules/audit/audit.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import languageRoutes from '../modules/language/language.routes.js';
+import fuelTypeRoutes from '../modules/fuelType/fuelType.routes.js';
 
 const router = express.Router();
 
@@ -37,5 +38,8 @@ router.use('/auth-logs', authRoutes);
 
 // Base route: /api/languages
 router.use('/languages', languageRoutes);
+
+// Base route: /api/fuel-types
+router.use('/fuel-types', fuelTypeRoutes);
 
 export default router;

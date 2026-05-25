@@ -7,8 +7,6 @@ import readline from 'readline';
 import Admin from './admin.model.js';
 import { AppError } from '../../utils/appError.util.js';
 import { logAudit } from '../../utils/auditLogger.util.js';
-import Price from '../price/price.model.js';
-import Promo from '../promo/promo.model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
