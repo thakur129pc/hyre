@@ -50,6 +50,26 @@ const citySchema = new mongoose.Schema(
       driverSearchRadiusKm: { type: Number, default: 2.5 },
       maxRideDistanceKm: { type: Number, default: 50 },
     },
+    createdById: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'createdByModel',
+      default: null,
+    },
+    createdByModel: {
+      type: String,
+      enum: ['Admin', 'Rider', 'Passenger'],
+      default: null,
+    },
+    updatedById: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'updatedByModel',
+      default: null,
+    },
+    updatedByModel: {
+      type: String,
+      enum: ['Admin', 'Rider', 'Passenger'],
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -47,6 +47,10 @@ export const addPrice = async (req, res, next) => {
           nightFareEndTime: nightFareEndTime || '06:00',
           standardFare,
           nightFare: nightFare || null,
+          createdById: req.user ? req.user.id : null,
+          createdByModel: req.userType || null,
+          updatedById: req.user ? req.user.id : null,
+          updatedByModel: req.userType || null,
         },
       ],
       { session }
@@ -121,6 +125,9 @@ export const editPrice = async (req, res, next) => {
           : nightFare;
       }
     }
+
+    price.updatedById = req.user ? req.user.id : null;
+    price.updatedByModel = req.userType || null;
 
     await price.save({ session });
 

@@ -40,6 +40,10 @@ export const createAdmin = async (req, res, next) => {
           phone,
           role,
           assignedCityIds: role === 'super_admin' ? [] : assignedCityIds,
+          createdById: req.user ? req.user.id : null,
+          createdByModel: req.userType || null,
+          updatedById: req.user ? req.user.id : null,
+          updatedByModel: req.userType || null,
         },
       ],
       { session }
@@ -98,6 +102,8 @@ export const editAdmin = async (req, res, next) => {
     if (assignedCityIds !== undefined) {
       updatePayload.assignedCityIds = adminToEdit.role === 'super_admin' ? [] : assignedCityIds;
     }
+    updatePayload.updatedById = req.user ? req.user.id : null;
+    updatePayload.updatedByModel = req.userType || null;
 
     const updatedAdmin = await Admin.findByIdAndUpdate(id, updatePayload, {
       returnDocument: 'after',
@@ -158,6 +164,8 @@ export const toggleAdminStatus = async (req, res, next) => {
 
     const newStatus = admin.status === 'active' ? 'inactive' : 'active';
     admin.status = newStatus;
+    admin.updatedById = req.user ? req.user.id : null;
+    admin.updatedByModel = req.userType || null;
     await admin.save({ session });
 
     await logAudit({

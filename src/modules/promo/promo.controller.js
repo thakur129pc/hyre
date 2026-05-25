@@ -57,7 +57,10 @@ export const createPromo = async (req, res, next) => {
           validUntil,
           usageLimit,
           limitPerUser,
-          createdBy: req.user.id,
+          createdById: req.user ? req.user.id : null,
+          createdByModel: req.userType || null,
+          updatedById: req.user ? req.user.id : null,
+          updatedByModel: req.userType || null,
         },
       ],
       { session }
@@ -164,6 +167,8 @@ export const getPromoByCode = async (req, res, next) => {
     if (isExpired && promo.status === 'active') {
       const beforeState = promo.toObject();
       promo.status = 'inactive';
+      promo.updatedById = req.user ? req.user.id : null;
+      promo.updatedByModel = req.userType || null;
       await promo.save({ session });
 
       // Audit status toggle
@@ -224,6 +229,8 @@ export const togglePromoStatus = async (req, res, next) => {
 
     const beforeState = promo.toObject();
     promo.status = newStatus;
+    promo.updatedById = req.user ? req.user.id : null;
+    promo.updatedByModel = req.userType || null;
     await promo.save({ session });
 
     // Log status toggle audit
@@ -372,6 +379,9 @@ export const editPromo = async (req, res, next) => {
     if (promo.validUntil <= promo.validFrom) {
       throw new AppError('validUntil must be after validFrom date.', 400);
     }
+
+    promo.updatedById = req.user ? req.user.id : null;
+    promo.updatedByModel = req.userType || null;
 
     await promo.save({ session });
 

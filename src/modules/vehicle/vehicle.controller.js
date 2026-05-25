@@ -56,6 +56,10 @@ export const addVehicleType = async (req, res, next) => {
       [
         {
           typeName: normalizedTypeName,
+          createdById: req.user ? req.user.id : null,
+          createdByModel: req.userType || null,
+          updatedById: req.user ? req.user.id : null,
+          updatedByModel: req.userType || null,
         },
       ],
       { session }
@@ -120,6 +124,10 @@ export const addVehicleSubType = async (req, res, next) => {
         {
           subTypeName: normalizedSubTypeName,
           typeId,
+          createdById: req.user ? req.user.id : null,
+          createdByModel: req.userType || null,
+          updatedById: req.user ? req.user.id : null,
+          updatedByModel: req.userType || null,
         },
       ],
       { session }
@@ -219,6 +227,10 @@ export const addVehicle = async (req, res, next) => {
           maxPassengerCapacity,
           iconUrl: resolvedIconUrl,
           vehicleSpecs,
+          createdById: req.user ? req.user.id : null,
+          createdByModel: req.userType || null,
+          updatedById: req.user ? req.user.id : null,
+          updatedByModel: req.userType || null,
         },
       ],
       { session }
@@ -350,6 +362,9 @@ export const editVehicleType = async (req, res, next) => {
       }
     }
 
+    vehicleType.updatedById = req.user ? req.user.id : null;
+    vehicleType.updatedByModel = req.userType || null;
+
     await vehicleType.save({ session });
 
     await logAudit({
@@ -396,6 +411,8 @@ export const toggleVehicleTypeStatus = async (req, res, next) => {
 
     const nextStatus = vehicleType.status === 'active' ? 'inactive' : 'active';
     vehicleType.status = nextStatus;
+    vehicleType.updatedById = req.user ? req.user.id : null;
+    vehicleType.updatedByModel = req.userType || null;
 
     await vehicleType.save({ session });
 
@@ -478,6 +495,9 @@ export const editVehicleSubType = async (req, res, next) => {
     if (subTypeName) vehicleSubType.subTypeName = currentSubTypeName;
     if (typeId) vehicleSubType.typeId = typeId;
 
+    vehicleSubType.updatedById = req.user ? req.user.id : null;
+    vehicleSubType.updatedByModel = req.userType || null;
+
     await vehicleSubType.save({ session });
 
     await logAudit({
@@ -524,6 +544,8 @@ export const toggleVehicleSubTypeStatus = async (req, res, next) => {
 
     const nextStatus = vehicleSubType.status === 'active' ? 'inactive' : 'active';
     vehicleSubType.status = nextStatus;
+    vehicleSubType.updatedById = req.user ? req.user.id : null;
+    vehicleSubType.updatedByModel = req.userType || null;
 
     await vehicleSubType.save({ session });
 
@@ -653,6 +675,9 @@ export const editVehicle = async (req, res, next) => {
       };
     }
 
+    vehicle.updatedById = req.user ? req.user.id : null;
+    vehicle.updatedByModel = req.userType || null;
+
     await vehicle.save({ session });
 
     await logAudit({
@@ -714,6 +739,8 @@ export const toggleVehicleStatus = async (req, res, next) => {
 
     const nextStatus = vehicle.status === 'active' ? 'inactive' : 'active';
     vehicle.status = nextStatus;
+    vehicle.updatedById = req.user ? req.user.id : null;
+    vehicle.updatedByModel = req.userType || null;
 
     await vehicle.save({ session });
 

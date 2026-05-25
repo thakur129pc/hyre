@@ -1,58 +1,84 @@
 import mongoose from 'mongoose';
 
-const vehicleSpecsSchema = new mongoose.Schema({
-  topSpeedPerKm: { type: Number },
-  batteryCapacityKwh: { type: Number },
-  rangePerChargeKm: { type: Number },
-  chargingTimeHours: { type: Number },
-}, { _id: false });
+const vehicleSpecsSchema = new mongoose.Schema(
+  {
+    topSpeedPerKm: { type: Number },
+    batteryCapacityKwh: { type: Number },
+    rangePerChargeKm: { type: Number },
+    chargingTimeHours: { type: Number },
+  },
+  { _id: false }
+);
 
-const vehicleSchema = new mongoose.Schema({
-  vehicleTypeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'VehicleType',
-    required: true,
+const vehicleSchema = new mongoose.Schema(
+  {
+    vehicleTypeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'VehicleType',
+      required: true,
+    },
+    vehicleSubTypeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'VehicleSubType',
+      required: true,
+    },
+    category: {
+      type: String,
+      enum: ['passenger', 'delivery'],
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    numberOfWheels: {
+      type: Number,
+      required: true,
+    },
+    maxPassengerCapacity: {
+      type: Number,
+      required: true,
+    },
+    iconUrl: {
+      type: String,
+      trim: true,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+    },
+    vehicleSpecs: vehicleSpecsSchema,
+    createdById: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'createdByModel',
+      default: null,
+    },
+    createdByModel: {
+      type: String,
+      enum: ['Admin', 'Rider', 'Passenger'],
+      default: null,
+    },
+    updatedById: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'updatedByModel',
+      default: null,
+    },
+    updatedByModel: {
+      type: String,
+      enum: ['Admin', 'Rider', 'Passenger'],
+      default: null,
+    },
   },
-  vehicleSubTypeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'VehicleSubType',
-    required: true,
-  },
-  category: {
-    type: String,
-    enum: ['passenger', 'delivery'],
-    required: true,
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  description: {
-    type: String,
-    trim: true,
-  },
-  numberOfWheels: {
-    type: Number,
-    required: true,
-  },
-  maxPassengerCapacity: {
-    type: Number,
-    required: true,
-  },
-  iconUrl: {
-    type: String,
-    trim: true,
-  },
-  status: {
-    type: String,
-    enum: ['active', 'inactive'],
-    default: 'active',
-  },
-  vehicleSpecs: vehicleSpecsSchema,
-}, {
-  timestamps: true,
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Compound unique index ensuring no same vehicle can be added twice with same vehicleTypeId and vehicleSubTypeId
 vehicleSchema.index({ vehicleTypeId: 1, vehicleSubTypeId: 1 }, { unique: true });

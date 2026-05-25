@@ -111,6 +111,10 @@ export const createCity = async (req, res, next) => {
           allowedVehicles: allowedVehicles || [],
           activeVehicles: activeVehicles || [],
           city_config: city_config || {},
+          createdById: req.user ? req.user.id : null,
+          createdByModel: req.userType || null,
+          updatedById: req.user ? req.user.id : null,
+          updatedByModel: req.userType || null,
         },
       ],
       { session }
@@ -254,6 +258,9 @@ export const editCity = async (req, res, next) => {
       city.iconUrl = `/uploads/cityIcons/${req.file.filename}`;
     }
 
+    city.updatedById = req.user ? req.user.id : null;
+    city.updatedByModel = req.userType || null;
+
     await city.save({ session });
 
     await logAudit({
@@ -317,6 +324,8 @@ export const toggleCityStatus = async (req, res, next) => {
     // Toggle logic: If coming_soon or inactive, activate it. Otherwise, deactivate.
     const nextStatus = city.status === 'active' ? 'inactive' : 'active';
     city.status = nextStatus;
+    city.updatedById = req.user ? req.user.id : null;
+    city.updatedByModel = req.userType || null;
 
     await city.save({ session });
 

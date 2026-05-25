@@ -58,10 +58,25 @@ const promoSchema = new mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
-    createdBy: {
+    createdById: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admin',
-      required: true,
+      refPath: 'createdByModel',
+      default: null,
+    },
+    createdByModel: {
+      type: String,
+      enum: ['Admin', 'Rider', 'Passenger'],
+      default: null,
+    },
+    updatedById: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'updatedByModel',
+      default: null,
+    },
+    updatedByModel: {
+      type: String,
+      enum: ['Admin', 'Rider', 'Passenger'],
+      default: null,
     },
   },
   {

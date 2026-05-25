@@ -19,6 +19,26 @@ const adminSchema = new mongoose.Schema(
     },
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
+    createdById: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'createdByModel',
+      default: null,
+    },
+    createdByModel: {
+      type: String,
+      enum: ['Admin', 'Rider', 'Passenger'],
+      default: null,
+    },
+    updatedById: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'updatedByModel',
+      default: null,
+    },
+    updatedByModel: {
+      type: String,
+      enum: ['Admin', 'Rider', 'Passenger'],
+      default: null,
+    },
   },
   {
     timestamps: true,
