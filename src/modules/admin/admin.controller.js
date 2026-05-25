@@ -6,8 +6,8 @@ import { fileURLToPath } from 'url';
 import readline from 'readline';
 import Admin from './admin.model.js';
 import AuditLog from '../audit/auditLog.model.js';
-import { AppError } from '../../core/utils/appError.util.js';
-import { logAudit } from '../../core/utils/auditLogger.util.js';
+import { AppError } from '../../utils/appError.util.js';
+import { logAudit } from '../../utils/auditLogger.util.js';
 import Price from '../price/price.model.js';
 import Promo from '../promo/promo.model.js';
 

@@ -4,8 +4,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import City from './city.model.js';
 import Vehicle from '../vehicle/vehicle.model.js';
-import { AppError } from '../../core/utils/appError.util.js';
-import { logAudit } from '../../core/utils/auditLogger.util.js';
+import { AppError } from '../../utils/appError.util.js';
+import { logAudit } from '../../utils/auditLogger.util.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

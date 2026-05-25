@@ -1,4 +1,4 @@
-import AuditLog from '../../modules/audit/auditLog.model.js';
+import AuditLog from '../modules/audit/auditLog.model.js';
 
 /**
  * Reusable utility to log polymorphic audit log records to MongoDB.

@@ -1,6 +1,6 @@
 import express from 'express';
-import validate from '../../core/middlewares/validate.middleware.js';
-import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
+import validate from '../../middlewares/validate.middleware.js';
+import { authenticateJWT, authorizeRoles } from '../../middlewares/auth.middleware.js';
 import {
   addPriceSchema,
   editPriceSchema,

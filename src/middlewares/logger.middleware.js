@@ -3,7 +3,7 @@ import useragent from 'express-useragent';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import AuthLog from '../../modules/auth/authLog.model.js';
+import AuthLog from '../modules/auth/authLog.model.js';
 
 morgan.token('user-details', (req) => {
   if (req.user) {
@@ -116,7 +116,7 @@ export const responseCaptureMiddleware = (req, res, next) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const logsDirectory = path.join(__dirname, '../../../logs');
+const logsDirectory = path.join(__dirname, '../../logs');
 
 if (!fs.existsSync(logsDirectory)) {
   fs.mkdirSync(logsDirectory, { recursive: true });

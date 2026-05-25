@@ -10,7 +10,9 @@ const getTransporter = () => {
     const { ZEPTOMAIL_USER, ZEPTOMAIL_PASS } = process.env;
 
     if (!ZEPTOMAIL_USER || !ZEPTOMAIL_PASS) {
-      console.warn('⚠️ SMTP mail credentials (ZEPTOMAIL_USER/ZEPTOMAIL_PASS) are missing in environment variables.');
+      console.warn(
+        '⚠️ SMTP mail credentials (ZEPTOMAIL_USER/ZEPTOMAIL_PASS) are missing in environment variables.'
+      );
     }
 
     transporter = nodemailer.createTransport({
@@ -40,7 +42,9 @@ const sendMail = async (emails, subject, mailContent) => {
   const { MAIL_NAME, MAIL_EMAIL } = process.env;
 
   if (!MAIL_NAME || !MAIL_EMAIL) {
-    console.warn('⚠️ Sender information (MAIL_NAME/MAIL_EMAIL) is missing in environment variables.');
+    console.warn(
+      '⚠️ Sender information (MAIL_NAME/MAIL_EMAIL) is missing in environment variables.'
+    );
   }
 
   const mailOptions = {

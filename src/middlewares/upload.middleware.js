@@ -25,7 +25,7 @@ export const createUploadMiddleware = ({
   },
   maxSize = 5 * 1024 * 1024,
 }) => {
-  const uploadsDir = path.join(__dirname, '../../../public/uploads', subFolder);
+  const uploadsDir = path.join(__dirname, '../../public/uploads', subFolder);
 
   // Ensure destination directory exists recursively
   if (!fs.existsSync(uploadsDir)) {

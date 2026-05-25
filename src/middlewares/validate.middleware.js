@@ -13,7 +13,7 @@ const validate = (schema) => (req, res, next) => {
   }, {});
 
   const errors = [];
-  
+
   Object.keys(validSchema).forEach((key) => {
     const { error, value } = validSchema[key].validate(req[key], {
       abortEarly: false,

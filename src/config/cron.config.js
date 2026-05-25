@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { deleteOldLogs } from '../core/middlewares/logger.middleware.js';
+import { deleteOldLogs } from '../middlewares/logger.middleware.js';
 
 /**
  * Schedules all background cron jobs for the application.

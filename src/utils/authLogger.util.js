@@ -1,5 +1,5 @@
 import useragent from 'express-useragent';
-import AuthLog from '../../modules/auth/authLog.model.js';
+import AuthLog from '../modules/auth/authLog.model.js';
 
 /**
  * Reusable utility to log discrete authentication events (login, logout, failed login, password changes/resets) to MongoDB.

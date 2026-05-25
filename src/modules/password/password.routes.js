@@ -1,6 +1,6 @@
 import express from 'express';
-import validate from '../../core/middlewares/validate.middleware.js';
-import { authenticateJWT } from '../../core/middlewares/auth.middleware.js';
+import validate from '../../middlewares/validate.middleware.js';
+import { authenticateJWT } from '../../middlewares/auth.middleware.js';
 import {
   changePasswordSchema,
   forgotPasswordLinkSchema,

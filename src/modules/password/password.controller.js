@@ -4,10 +4,10 @@ import crypto from 'crypto';
 import Admin from '../admin/admin.model.js';
 import Passenger from '../passenger/passenger.model.js';
 import Rider from '../rider/rider.model.js';
-import { AppError } from '../../core/utils/appError.util.js';
-import sendMail from '../../core/utils/sendMail.util.js';
-import { logAudit } from '../../core/utils/auditLogger.util.js';
-import { logAuthEvent } from '../../core/utils/authLogger.util.js';
+import { AppError } from '../../utils/appError.util.js';
+import sendMail from '../../utils/sendMail.util.js';
+import { logAudit } from '../../utils/auditLogger.util.js';
+import { logAuthEvent } from '../../utils/authLogger.util.js';
 
 /**
  * Resolves the appropriate Mongoose model based on the userType.

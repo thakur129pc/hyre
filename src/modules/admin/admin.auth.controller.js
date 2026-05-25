@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Admin from './admin.model.js';
-import { AppError } from '../../core/utils/appError.util.js';
-import { logAudit } from '../../core/utils/auditLogger.util.js';
-import { logAuthEvent } from '../../core/utils/authLogger.util.js';
+import { AppError } from '../../utils/appError.util.js';
+import { logAudit } from '../../utils/auditLogger.util.js';
+import { logAuthEvent } from '../../utils/authLogger.util.js';
 
 /**
  * Admin Login API

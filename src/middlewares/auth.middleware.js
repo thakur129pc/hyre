@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/appError.util.js';
-import Admin from '../../modules/admin/admin.model.js';
+import Admin from '../modules/admin/admin.model.js';
 
 /**
  * Middleware to verify JWT token and attach user to req.user

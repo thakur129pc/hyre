@@ -1,9 +1,9 @@
 import express from 'express';
-import validate from '../../core/middlewares/validate.middleware.js';
-import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
-import { createUploadMiddleware } from '../../core/middlewares/upload.middleware.js';
-import { sanitizationMiddleware } from '../../core/middlewares/sanitization.middleware.js';
-import verifyHmac from '../../core/middlewares/verifyHmac.middleware.js';
+import validate from '../../middlewares/validate.middleware.js';
+import { authenticateJWT, authorizeRoles } from '../../middlewares/auth.middleware.js';
+import { createUploadMiddleware } from '../../middlewares/upload.middleware.js';
+import { sanitizationMiddleware } from '../../middlewares/sanitization.middleware.js';
+import verifyHmac from '../../middlewares/verifyHmac.middleware.js';
 
 const { upload, validateUpload } = createUploadMiddleware({
   subFolder: 'vehicleCatalogIcons',

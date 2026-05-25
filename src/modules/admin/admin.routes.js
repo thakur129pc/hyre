@@ -1,7 +1,7 @@
 import express from 'express';
-import validate from '../../core/middlewares/validate.middleware.js';
-import { authenticateJWT, authorizeRoles } from '../../core/middlewares/auth.middleware.js';
-import { failedLoginLimiter } from '../../core/middlewares/limiter.middleware.js';
+import validate from '../../middlewares/validate.middleware.js';
+import { authenticateJWT, authorizeRoles } from '../../middlewares/auth.middleware.js';
+import { failedLoginLimiter } from '../../middlewares/limiter.middleware.js';
 import {
   createAdminSchema,
   editAdminSchema,

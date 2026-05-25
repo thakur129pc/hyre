@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 import Price from './price.model.js';
 import City from '../city/city.model.js';
 import Vehicle from '../vehicle/vehicle.model.js';
-import { AppError } from '../../core/utils/appError.util.js';
-import { logAudit } from '../../core/utils/auditLogger.util.js';
+import { AppError } from '../../utils/appError.util.js';
+import { logAudit } from '../../utils/auditLogger.util.js';
 
 /**
  * Add Price API

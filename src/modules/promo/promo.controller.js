@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import Promo from './promo.model.js';
 import City from '../city/city.model.js';
-import { AppError } from '../../core/utils/appError.util.js';
-import { logAudit } from '../../core/utils/auditLogger.util.js';
+import { AppError } from '../../utils/appError.util.js';
+import { logAudit } from '../../utils/auditLogger.util.js';
 
 /**
  * Create a new Promo Code

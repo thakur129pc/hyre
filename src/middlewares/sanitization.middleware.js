@@ -11,7 +11,7 @@ const exemptedFields = [
 const checkPayload = (obj) => {
   if (typeof obj === 'string') {
     if (invalidCharsRegex.test(obj)) {
-      return false; 
+      return false;
     }
   } else if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
@@ -29,7 +29,7 @@ const checkPayload = (obj) => {
       }
     }
   }
-  return true; 
+  return true;
 };
 
 export const sanitizationMiddleware = (req, res, next) => {

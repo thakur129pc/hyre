@@ -4,20 +4,14 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 
 // Import middlewares
-import { apiRateLimiter, sensitiveApiRateLimiter } from './core/middlewares/limiter.middleware.js';
-import errorMiddleware from './core/middlewares/error.middleware.js';
-import userInfoMiddleware from './core/middlewares/info.middleware.js';
-import {
-  loggerMiddleware,
-  responseCaptureMiddleware,
-} from './core/middlewares/logger.middleware.js';
-import {
-  securityMiddleware,
-  customSecurityHeaders,
-} from './core/middlewares/security.middleware.js';
-import verifyHmac from './core/middlewares/verifyHmac.middleware.js';
-import staticFileMiddleware from './core/middlewares/files.middleware.js';
-import { sanitizationMiddleware } from './core/middlewares/sanitization.middleware.js';
+import { apiRateLimiter, sensitiveApiRateLimiter } from './middlewares/limiter.middleware.js';
+import errorMiddleware from './middlewares/error.middleware.js';
+import userInfoMiddleware from './middlewares/info.middleware.js';
+import { loggerMiddleware, responseCaptureMiddleware } from './middlewares/logger.middleware.js';
+import { securityMiddleware, customSecurityHeaders } from './middlewares/security.middleware.js';
+import verifyHmac from './middlewares/verifyHmac.middleware.js';
+import staticFileMiddleware from './middlewares/files.middleware.js';
+import { sanitizationMiddleware } from './middlewares/sanitization.middleware.js';
 
 // Import config and routes
 import { scheduleCronJobs } from './config/cron.config.js';
