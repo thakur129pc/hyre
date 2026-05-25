@@ -47,6 +47,7 @@ const auditLogSchema = new mongoose.Schema(
         'Promo',
         'Language',
         'FuelType',
+        'OwnerType',
       ],
     },
     changes: {

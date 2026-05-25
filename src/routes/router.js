@@ -9,6 +9,7 @@ import auditRoutes from '../modules/audit/audit.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import languageRoutes from '../modules/language/language.routes.js';
 import fuelTypeRoutes from '../modules/fuelType/fuelType.routes.js';
+import ownerTypeRoutes from '../modules/ownerType/ownerType.routes.js';
 
 const router = express.Router();
 
@@ -41,5 +42,8 @@ router.use('/languages', languageRoutes);
 
 // Base route: /api/fuel-types
 router.use('/fuel-types', fuelTypeRoutes);
+
+// Base route: /api/owner-types
+router.use('/owner-types', ownerTypeRoutes);
 
 export default router;
