@@ -1,40 +1,46 @@
 import mongoose from 'mongoose';
 
-const driverReferralSchema = new mongoose.Schema({
-  ownCode: { type: String },
-  usedCode: { type: String },
-  referredByUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'Rider' }, // Recursive reference
-  referralCount: { type: Number, default: 0 },
-  totalRewardsEarned: { type: Number, default: 0 }
-}, { _id: false });
+const driverReferralSchema = new mongoose.Schema(
+  {
+    ownCode: { type: String },
+    usedCode: { type: String },
+    referredByUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'Rider' }, // Recursive reference
+    referralCount: { type: Number, default: 0 },
+    totalRewardsEarned: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
 
-const riderSchema = new mongoose.Schema({
-  mobileNumber: { type: String, required: true, unique: true },
-  fullName: { type: String, required: true },
-  cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'CityMaster' },
-  vehicleTypeId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'VehicleMaster' }],
-  status: {
-    type: String,
-    enum: ['pending', 'verified', 'suspended', 'active'],
-    default: 'pending'
+const riderSchema = new mongoose.Schema(
+  {
+    mobileNumber: { type: String, required: true, unique: true },
+    fullName: { type: String, required: true },
+    cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'City' },
+    vehicleTypeId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle' }],
+    status: {
+      type: String,
+      enum: ['pending', 'verified', 'suspended', 'active'],
+      default: 'pending',
+    },
+    languagePreferenceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Language' },
+    referral: driverReferralSchema,
+    joinedAt: { type: Date, default: Date.now },
+    lastActiveAt: { type: Date },
+    lastKnownLocation: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number] }, // [longitude, latitude]
+    },
+    isOnline: {
+      type: String,
+      enum: ['offline', 'online', 'occupied'],
+      default: 'offline',
+    },
+    activeVehicleId: { type: mongoose.Schema.Types.ObjectId, ref: 'DriverVehicle' },
   },
-  languagePreferenceId: { type: mongoose.Schema.Types.ObjectId, ref: 'LanguageMaster' },
-  referral: driverReferralSchema,
-  joinedAt: { type: Date, default: Date.now },
-  lastActiveAt: { type: Date },
-  lastKnownLocation: {
-    type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number] } // [longitude, latitude]
-  },
-  isOnline: {
-    type: String,
-    enum: ['offline', 'online', 'occupied'],
-    default: 'offline'
-  },
-  activeVehicleId: { type: mongoose.Schema.Types.ObjectId, ref: 'DriverVehicle' }
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Create 2dsphere index for real-time geospatial location queries
 riderSchema.index({ lastKnownLocation: '2dsphere' });
