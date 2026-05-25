@@ -444,3 +444,25 @@ export const deletePromo = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Automatically transitions all expired promo codes (validUntil passed) to inactive status.
+ * Intended to be run periodically by a background scheduler (cron job).
+ */
+export const autoExpirePromos = async () => {
+  console.log('⏳ Running scheduled promo auto-expiration job...');
+  try {
+    const now = new Date();
+    const result = await Promo.updateMany(
+      { status: 'active', validUntil: { $lt: now } },
+      { $set: { status: 'inactive' } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`🟢 Auto-expired ${result.modifiedCount} promo codes.`);
+    } else {
+      console.log('🟢 No expired promo codes found to deactivate.');
+    }
+  } catch (error) {
+    console.error('🔴 Error running promo auto-expiration job:', error.message);
+  }
+};

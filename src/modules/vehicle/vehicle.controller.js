@@ -327,7 +327,7 @@ export const editVehicleType = async (req, res, next) => {
 
   try {
     const { id } = req.params;
-    const { typeName, description } = req.body;
+    const { typeName } = req.body;
 
     const vehicleType = await VehicleType.findById(id).session(session);
     if (!vehicleType) {
@@ -433,7 +433,7 @@ export const editVehicleSubType = async (req, res, next) => {
 
   try {
     const { id } = req.params;
-    const { subTypeName, typeId, description } = req.body;
+    const { subTypeName, typeId } = req.body;
 
     const vehicleSubType = await VehicleSubType.findById(id).session(session);
     if (!vehicleSubType) {

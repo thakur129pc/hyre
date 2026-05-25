@@ -92,11 +92,18 @@ export const editAdmin = async (req, res, next) => {
     const beforeState = adminToEdit.toObject();
     delete beforeState.password;
 
-    const updatedAdmin = await Admin.findByIdAndUpdate(
-      id,
-      { name, phone, assignedCityIds: adminToEdit.role === 'super_admin' ? [] : assignedCityIds },
-      { returnDocument: 'after', runValidators: true, session }
-    );
+    const updatePayload = {};
+    if (name !== undefined) updatePayload.name = name;
+    if (phone !== undefined) updatePayload.phone = phone;
+    if (assignedCityIds !== undefined) {
+      updatePayload.assignedCityIds = adminToEdit.role === 'super_admin' ? [] : assignedCityIds;
+    }
+
+    const updatedAdmin = await Admin.findByIdAndUpdate(id, updatePayload, {
+      returnDocument: 'after',
+      runValidators: true,
+      session,
+    });
 
     const afterState = updatedAdmin.toObject();
     delete afterState.password;
