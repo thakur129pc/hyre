@@ -48,12 +48,28 @@ export const createPromoSchema = Joi.object({
 });
 
 export const queryPromosSchema = Joi.object({
+  search: Joi.string().trim().max(50).allow('').optional(),
   cityId: Joi.string().hex().length(24).optional().messages({
     'string.hex': 'Invalid City ID format.',
     'string.length': 'Invalid City ID format.',
   }),
-  sortBy: Joi.string().valid('validity', 'discountValue').optional(),
-  sortOrder: Joi.string().valid('asc', 'desc').optional().default('asc'),
+  status: Joi.string().valid('active', 'inactive', 'all').optional().default('all').messages({
+    'any.only': 'Status filter must be active, inactive, or all.',
+  }),
+  discountType: Joi.string().valid('flat', 'percentage', 'all').optional().default('all').messages({
+    'any.only': 'Discount type filter must be flat, percentage, or all.',
+  }),
+  validFrom: Joi.date().iso().optional().messages({
+    'date.format': 'validFrom must be a valid ISO date.',
+  }),
+  validUntil: Joi.date().iso().optional().messages({
+    'date.format': 'validUntil must be a valid ISO date.',
+  }),
+  sortBy: Joi.string()
+    .valid('validity', 'discountValue', 'code', 'createdAt')
+    .optional()
+    .default('createdAt'),
+  sortOrder: Joi.string().valid('asc', 'desc').optional().default('desc'),
   page: Joi.number().integer().min(1).optional().default(1),
   limit: Joi.number().integer().min(1).max(100).optional().default(20),
 });

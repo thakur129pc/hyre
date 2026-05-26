@@ -18,6 +18,7 @@ export const editFuelTypeSchema = Joi.object({
 });
 
 export const queryFuelTypesSchema = Joi.object({
+  search: Joi.string().trim().max(100).allow('').optional(),
   status: Joi.string().valid('active', 'inactive', 'all').optional().default('all').messages({
     'any.only': 'Status filter must be active, inactive, or all.',
   }),
@@ -29,8 +30,8 @@ export const queryFuelTypesSchema = Joi.object({
 
 export const fuelTypeParamSchema = Joi.object({
   id: Joi.string().hex().length(24).required().messages({
-    'string.hex': 'Invalid Fuel Type ID format in URL.',
-    'string.length': 'Invalid Fuel Type ID format in URL.',
-    'any.required': 'Fuel Type ID is required in URL.',
+    'string.hex': 'Invalid Fuel Type ID format.',
+    'string.length': 'Invalid Fuel Type ID format.',
+    'any.required': 'Fuel Type ID is required.',
   }),
 });

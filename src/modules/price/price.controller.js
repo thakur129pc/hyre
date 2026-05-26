@@ -280,6 +280,7 @@ export const deletePrice = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'Pricing configuration deleted successfully.',
+      data: null,
     });
   } catch (error) {
     await session.abortTransaction();

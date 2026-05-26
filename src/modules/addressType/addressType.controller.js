@@ -296,6 +296,7 @@ export const deleteAddressType = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'Address type deleted successfully.',
+      data: null,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -306,11 +307,18 @@ export const deleteAddressType = async (req, res, next) => {
 
 /**
  * Get Address Types
- * Accessible to authenticated users. Supports pagination, filters, and sorting.
+ * Accessible to authenticated users. Supports search, pagination, filters, and sorting.
  */
 export const getAddressTypes = async (req, res, next) => {
   try {
-    const { status = 'all', sortBy = 'title', sortOrder = 'asc', page = 1, limit = 20 } = req.body;
+    const {
+      search = '',
+      status = 'all',
+      sortBy = 'title',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 20,
+    } = req.body;
 
     const filter = {};
 
@@ -323,23 +331,34 @@ export const getAddressTypes = async (req, res, next) => {
       }
     }
 
+    // Search by title
+    if (search && search.trim()) {
+      filter.title = {
+        $regex: new RegExp(search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'),
+      };
+    }
+
     const sortCriteria = {};
     sortCriteria[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
     const skip = (page - 1) * limit;
 
-    const totalAddressTypes = await AddressType.countDocuments(filter);
-    const addressTypes = await AddressType.find(filter).sort(sortCriteria).skip(skip).limit(limit);
+    const [totalElements, addressTypes] = await Promise.all([
+      AddressType.countDocuments(filter),
+      AddressType.find(filter).sort(sortCriteria).skip(skip).limit(limit),
+    ]);
 
     res.status(200).json({
       status: true,
       message: 'Address types fetched successfully.',
       data: {
         addressTypes,
-        totalAddressTypes,
-        page,
-        limit,
-        totalPages: Math.ceil(totalAddressTypes / limit),
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
       },
     });
   } catch (error) {

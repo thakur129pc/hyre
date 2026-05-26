@@ -55,10 +55,19 @@ export const editCitySchema = Joi.object({
 });
 
 export const fetchCitiesSchema = Joi.object({
-  state: Joi.string().trim().optional(),
-  status: Joi.string().valid('active', 'inactive', 'coming_soon').optional().messages({
-    'any.only': 'Status filter must be active, inactive, or coming_soon.',
-  }),
+  search: Joi.string().trim().max(100).allow('').optional(),
+  state: Joi.string().trim().max(100).allow('').optional(),
+  status: Joi.string()
+    .valid('active', 'inactive', 'coming_soon', 'all')
+    .optional()
+    .default('all')
+    .messages({
+      'any.only': 'Status filter must be active, inactive, coming_soon, or all.',
+    }),
+  sortBy: Joi.string().valid('name', 'state', 'status', 'createdAt').optional().default('name'),
+  sortOrder: Joi.string().valid('asc', 'desc').optional().default('asc'),
+  page: Joi.number().integer().min(1).optional().default(1),
+  limit: Joi.number().integer().min(1).max(100).optional().default(20),
 });
 
 export const cityParamSchema = Joi.object({

@@ -41,7 +41,12 @@ export const fetchAuditLogsSchema = Joi.object({
       'Rider',
       'Passenger',
       'Price',
-      'Promo'
+      'Promo',
+      'Language',
+      'FuelType',
+      'OwnerType',
+      'AddressType',
+      'State'
     )
     .optional(),
 });

@@ -42,6 +42,7 @@ const fuelTypeSchema = new mongoose.Schema(
 // Performance Indexes for search speed and uniqueness lookup
 fuelTypeSchema.index({ title: 1, status: 1 });
 fuelTypeSchema.index({ status: 1 });
+fuelTypeSchema.index({ createdAt: -1 });
 
 const FuelType = mongoose.model('FuelType', fuelTypeSchema);
 

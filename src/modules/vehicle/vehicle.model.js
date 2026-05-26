@@ -85,6 +85,9 @@ vehicleSchema.index({ vehicleTypeId: 1, vehicleSubTypeId: 1 }, { unique: true })
 
 // Basic indexes for catalog listing queries
 vehicleSchema.index({ category: 1, status: 1 });
+vehicleSchema.index({ status: 1 });
+vehicleSchema.index({ title: 1 });
+vehicleSchema.index({ createdAt: -1 });
 
 const Vehicle = mongoose.model('Vehicle', vehicleSchema);
 

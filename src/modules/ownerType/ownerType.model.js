@@ -42,6 +42,7 @@ const ownerTypeSchema = new mongoose.Schema(
 // Performance Indexes for search speed and uniqueness lookup
 ownerTypeSchema.index({ title: 1, status: 1 });
 ownerTypeSchema.index({ status: 1 });
+ownerTypeSchema.index({ createdAt: -1 });
 
 const OwnerType = mongoose.model('OwnerType', ownerTypeSchema);
 

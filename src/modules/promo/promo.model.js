@@ -86,6 +86,10 @@ const promoSchema = new mongoose.Schema(
 
 promoSchema.index({ cityId: 1 });
 promoSchema.index({ validUntil: 1 });
+promoSchema.index({ status: 1, createdAt: -1 });
+promoSchema.index({ discountType: 1 });
+promoSchema.index({ discountValue: 1 });
+promoSchema.index({ createdAt: -1 });
 
 const Promo = mongoose.model('Promo', promoSchema);
 

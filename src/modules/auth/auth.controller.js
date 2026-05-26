@@ -40,10 +40,12 @@ export const getAuthLogs = async (req, res, next) => {
       message: 'Auth logs fetched successfully.',
       data: {
         logs,
-        totalLogs,
-        page,
-        limit,
+      },
+      pagination: {
+        currentPage: page,
         totalPages: Math.ceil(totalLogs / limit),
+        limitPerPage: limit,
+        totalElements: totalLogs,
       },
     });
   } catch (error) {

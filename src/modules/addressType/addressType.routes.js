@@ -2,6 +2,8 @@ import express from 'express';
 import { authenticateJWT, authorizeRoles } from '../../middlewares/auth.middleware.js';
 import validate from '../../middlewares/validate.middleware.js';
 import { createUploadMiddleware } from '../../middlewares/upload.middleware.js';
+import verifyHmac from '../../middlewares/verifyHmac.middleware.js';
+import { sanitizationMiddleware } from '../../middlewares/sanitization.middleware.js';
 import {
   addAddressType,
   editAddressType,
@@ -38,6 +40,8 @@ router.post(
   authorizeRoles('super_admin'),
   upload.single('icon'),
   validateUpload,
+  verifyHmac,
+  sanitizationMiddleware,
   validate({ body: createAddressTypeSchema }),
   addAddressType
 );
@@ -48,6 +52,8 @@ router.post(
   authorizeRoles('super_admin'),
   upload.single('icon'),
   validateUpload,
+  verifyHmac,
+  sanitizationMiddleware,
   validate({ params: addressTypeParamSchema, body: editAddressTypeSchema }),
   editAddressType
 );

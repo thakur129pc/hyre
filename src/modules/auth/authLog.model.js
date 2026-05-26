@@ -53,6 +53,11 @@ const authLogSchema = new mongoose.Schema(
 
 // TTL index to automatically delete logs older than 90 days
 authLogSchema.index({ performedAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+authLogSchema.index({ userId: 1, performedAt: -1 });
+authLogSchema.index({ userType: 1, performedAt: -1 });
+authLogSchema.index({ action: 1, performedAt: -1 });
+authLogSchema.index({ status: 1, performedAt: -1 });
+authLogSchema.index({ performedAt: -1 });
 
 const AuthLog = mongoose.model('AuthLog', authLogSchema);
 

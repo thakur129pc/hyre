@@ -74,6 +74,10 @@ const languageSchema = new mongoose.Schema(
 // Performance Indexes for search speed
 languageSchema.index({ languageCode: 1, status: 1 });
 languageSchema.index({ status: 1 });
+languageSchema.index({ languageName: 1 });
+languageSchema.index({ languageNameInEnglish: 1 });
+languageSchema.index({ isDefault: -1, languageName: 1 });
+languageSchema.index({ createdAt: -1 });
 
 const Language = mongoose.model('Language', languageSchema);
 

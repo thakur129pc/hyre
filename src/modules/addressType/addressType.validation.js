@@ -18,6 +18,7 @@ export const editAddressTypeSchema = Joi.object({
 });
 
 export const queryAddressTypesSchema = Joi.object({
+  search: Joi.string().trim().max(100).allow('').optional(),
   status: Joi.string().valid('active', 'inactive', 'all').optional().default('all').messages({
     'any.only': 'Status filter must be active, inactive, or all.',
   }),

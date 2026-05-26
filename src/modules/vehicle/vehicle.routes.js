@@ -17,6 +17,7 @@ import {
   addVehicleTypeSchema,
   addVehicleSubTypeSchema,
   addVehicleSchema,
+  fetchVehicleTypesSchema,
   fetchSubTypesSchema,
   fetchVehiclesSchema,
   editVehicleTypeSchema,
@@ -54,7 +55,12 @@ const router = express.Router();
 
 // --- PUBLIC/AUTHENTICATED CATALOG QUERIES ---
 // (Accessible to any authenticated user type like Passenger/Rider/Admin)
-router.post('/get-types', authenticateJWT, getVehicleTypes);
+router.post(
+  '/get-types',
+  authenticateJWT,
+  validate({ body: fetchVehicleTypesSchema }),
+  getVehicleTypes
+);
 
 router.post(
   '/get-subtypes',
@@ -157,7 +163,7 @@ router.post(
   authorizeRoles('super_admin'),
   upload.single('icon'),
   validateUpload,
-  // verifyHmac,
+  verifyHmac,
   parseVehicleSpecs,
   sanitizationMiddleware,
   validate({ body: addVehicleSchema }),
@@ -175,7 +181,7 @@ router.post(
   authorizeRoles('super_admin'),
   upload.single('icon'),
   validateUpload,
-  // verifyHmac,
+  verifyHmac,
   parseVehicleSpecs,
   sanitizationMiddleware,
   validate({ params: vehicleParamSchema, body: editVehicleSchema }),

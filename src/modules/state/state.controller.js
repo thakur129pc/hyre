@@ -246,6 +246,7 @@ export const deleteState = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'State deleted successfully.',
+      data: null,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -298,7 +299,7 @@ export const getStates = async (req, res, next) => {
 
     const skip = (page - 1) * limit;
 
-    const [totalStates, states] = await Promise.all([
+    const [totalElements, states] = await Promise.all([
       State.countDocuments(filter),
       State.find(filter).sort(sortCriteria).skip(skip).limit(limit),
     ]);
@@ -308,10 +309,12 @@ export const getStates = async (req, res, next) => {
       message: 'States fetched successfully.',
       data: {
         states,
-        totalStates,
-        page,
-        limit,
-        totalPages: Math.ceil(totalStates / limit),
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
       },
     });
   } catch (error) {

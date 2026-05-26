@@ -81,6 +81,9 @@ citySchema.index({ name: 1, state: 1 }, { unique: true });
 
 // Basic index for query filtering
 citySchema.index({ state: 1, status: 1 });
+citySchema.index({ status: 1 });
+citySchema.index({ name: 1 });
+citySchema.index({ createdAt: -1 });
 
 const City = mongoose.model('City', citySchema);
 

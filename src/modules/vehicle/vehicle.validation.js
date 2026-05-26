@@ -56,12 +56,26 @@ export const addVehicleSchema = Joi.object({
   }).optional(),
 });
 
+export const fetchVehicleTypesSchema = Joi.object({
+  search: Joi.string().trim().max(100).allow('').optional(),
+  status: Joi.string().valid('active', 'inactive', 'all').optional().default('all'),
+  sortBy: Joi.string().valid('typeName', 'createdAt').optional().default('typeName'),
+  sortOrder: Joi.string().valid('asc', 'desc').optional().default('asc'),
+  page: Joi.number().integer().min(1).optional().default(1),
+  limit: Joi.number().integer().min(1).max(100).optional().default(20),
+});
+
 export const fetchSubTypesSchema = Joi.object({
-  typeId: Joi.string().hex().length(24).required().messages({
+  typeId: Joi.string().hex().length(24).optional().messages({
     'string.hex': 'Invalid Vehicle Type ID format.',
     'string.length': 'Invalid Vehicle Type ID format.',
-    'any.required': 'Vehicle Type ID is required.',
   }),
+  search: Joi.string().trim().max(100).allow('').optional(),
+  status: Joi.string().valid('active', 'inactive', 'all').optional().default('all'),
+  sortBy: Joi.string().valid('subTypeName', 'createdAt').optional().default('subTypeName'),
+  sortOrder: Joi.string().valid('asc', 'desc').optional().default('asc'),
+  page: Joi.number().integer().min(1).optional().default(1),
+  limit: Joi.number().integer().min(1).max(100).optional().default(20),
 });
 
 export const fetchVehiclesSchema = Joi.object({
@@ -69,9 +83,17 @@ export const fetchVehiclesSchema = Joi.object({
     'string.hex': 'Invalid Vehicle Type ID format.',
     'string.length': 'Invalid Vehicle Type ID format.',
   }),
-  status: Joi.string().valid('active', 'inactive').optional().messages({
-    'any.only': 'Status must be active or inactive.',
+  vehicleSubTypeId: Joi.string().hex().length(24).optional().messages({
+    'string.hex': 'Invalid Vehicle Subtype ID format.',
+    'string.length': 'Invalid Vehicle Subtype ID format.',
   }),
+  category: Joi.string().valid('passenger', 'delivery', 'all').optional().default('all'),
+  search: Joi.string().trim().max(100).allow('').optional(),
+  status: Joi.string().valid('active', 'inactive', 'all').optional().default('all'),
+  sortBy: Joi.string().valid('title', 'createdAt').optional().default('title'),
+  sortOrder: Joi.string().valid('asc', 'desc').optional().default('asc'),
+  page: Joi.number().integer().min(1).optional().default(1),
+  limit: Joi.number().integer().min(1).max(100).optional().default(20),
 });
 
 export const editVehicleTypeSchema = Joi.object({

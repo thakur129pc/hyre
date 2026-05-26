@@ -98,43 +98,84 @@ export const createPromo = async (req, res, next) => {
  */
 export const getPromos = async (req, res, next) => {
   try {
-    const { cityId, sortBy, sortOrder = 'asc', page = 1, limit = 20 } = req.body;
+    const {
+      search = '',
+      cityId,
+      status = 'all',
+      discountType = 'all',
+      validFrom,
+      validUntil,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 20,
+    } = req.body;
 
     const filter = {};
+
+    // Status filter
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // Discount type filter
+    if (discountType && discountType !== 'all') {
+      filter.discountType = discountType;
+    }
+
+    // City filter: if provided, return city-specific AND global promos
     if (cityId) {
-      // Return both city-specific and global promos
       filter.$or = [{ cityId }, { cityId: null }];
     }
 
-    const query = Promo.find(filter);
+    // Search by promo code (prefix match, case-insensitive)
+    if (search && search.trim()) {
+      filter.code = {
+        $regex: new RegExp(search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'),
+      };
+    }
 
-    // Apply sorting
+    // Date range filter on validFrom / validUntil
+    if (validFrom || validUntil) {
+      if (validFrom) filter.validFrom = { ...filter.validFrom, $gte: new Date(validFrom) };
+      if (validUntil) filter.validUntil = { ...filter.validUntil, $lte: new Date(validUntil) };
+    }
+
+    // Sorting
+    let sortCriteria;
     if (sortBy === 'validity') {
-      query.sort({ validUntil: sortOrder === 'desc' ? -1 : 1 });
+      sortCriteria = { validUntil: sortOrder === 'desc' ? -1 : 1 };
     } else if (sortBy === 'discountValue') {
-      query.sort({ discountValue: sortOrder === 'desc' ? -1 : 1 });
+      sortCriteria = { discountValue: sortOrder === 'desc' ? -1 : 1 };
+    } else if (sortBy === 'code') {
+      sortCriteria = { code: sortOrder === 'desc' ? -1 : 1 };
     } else {
-      query.sort({ createdAt: -1 });
+      sortCriteria = { createdAt: sortOrder === 'desc' ? -1 : 1 };
     }
 
     // Pagination
     const skip = (page - 1) * limit;
-    const totalPromos = await Promo.countDocuments(filter);
 
-    const promos = await query
-      .skip(skip)
-      .limit(limit)
-      .populate({ path: 'cityId', select: 'name state' });
+    const [totalElements, promos] = await Promise.all([
+      Promo.countDocuments(filter),
+      Promo.find(filter)
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(limit)
+        .populate({ path: 'cityId', select: 'name state' }),
+    ]);
 
     res.status(200).json({
       status: true,
       message: 'Promo codes fetched successfully.',
       data: {
         promos,
-        totalPromos,
-        page,
-        limit,
-        totalPages: Math.ceil(totalPromos / limit),
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
       },
     });
   } catch (error) {
@@ -447,6 +488,7 @@ export const deletePromo = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'Promo code deleted successfully.',
+      data: null,
     });
   } catch (error) {
     await session.abortTransaction();

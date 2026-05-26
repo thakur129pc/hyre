@@ -47,6 +47,7 @@ const addressTypeSchema = new mongoose.Schema(
 // Performance Indexes
 addressTypeSchema.index({ title: 1, status: 1 });
 addressTypeSchema.index({ status: 1 });
+addressTypeSchema.index({ createdAt: -1 });
 
 const AddressType = mongoose.model('AddressType', addressTypeSchema);
 

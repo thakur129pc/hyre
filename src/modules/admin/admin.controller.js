@@ -232,6 +232,7 @@ export const deleteAdmin = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'Admin deleted successfully.',
+      data: null,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -297,13 +298,21 @@ const readLogsFromFilePaginated = (logType, date, page = 1, limit = 100) => {
  */
 export const getCombinedLogs = async (req, res, next) => {
   try {
-    const { date, page, limit } = req.body;
+    const { date, page = 1, limit = 100 } = req.body;
     const result = await readLogsFromFilePaginated('combined', date, page, limit);
+
+    const { logs, totalLogs, totalPages } = result;
 
     res.status(200).json({
       status: true,
       message: 'Combined logs fetched successfully.',
-      data: result,
+      data: { logs },
+      pagination: {
+        currentPage: Number(page),
+        totalPages,
+        limitPerPage: Number(limit),
+        totalElements: totalLogs,
+      },
     });
   } catch (error) {
     next(error);
@@ -315,13 +324,21 @@ export const getCombinedLogs = async (req, res, next) => {
  */
 export const getErrorLogs = async (req, res, next) => {
   try {
-    const { date, page, limit } = req.body;
+    const { date, page = 1, limit = 100 } = req.body;
     const result = await readLogsFromFilePaginated('error', date, page, limit);
+
+    const { logs, totalLogs, totalPages } = result;
 
     res.status(200).json({
       status: true,
       message: 'Error logs fetched successfully.',
-      data: result,
+      data: { logs },
+      pagination: {
+        currentPage: Number(page),
+        totalPages,
+        limitPerPage: Number(limit),
+        totalElements: totalLogs,
+      },
     });
   } catch (error) {
     next(error);

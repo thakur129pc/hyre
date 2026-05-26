@@ -280,6 +280,7 @@ export const deleteLanguage = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'Language deleted successfully.',
+      data: null,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -295,7 +296,10 @@ export const deleteLanguage = async (req, res, next) => {
 export const getLanguages = async (req, res, next) => {
   try {
     const {
+      search = '',
       status = 'all',
+      isRTL,
+      isDefault,
       sortBy = 'languageName',
       sortOrder = 'asc',
       page = 1,
@@ -313,6 +317,22 @@ export const getLanguages = async (req, res, next) => {
       }
     }
 
+    // Filter by RTL direction
+    if (isRTL !== undefined) filter.isRTL = isRTL;
+
+    // Filter by default language flag
+    if (isDefault !== undefined) filter.isDefault = isDefault;
+
+    // Search by languageName, languageNameInEnglish, or languageCode
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i');
+      filter.$or = [
+        { languageName: searchRegex },
+        { languageNameInEnglish: searchRegex },
+        { languageCode: searchRegex },
+      ];
+    }
+
     // Sorting logic
     // Default language is always pinned to the top, followed by dynamic sort request
     const sortCriteria = { isDefault: -1 };
@@ -321,18 +341,22 @@ export const getLanguages = async (req, res, next) => {
     // Pagination
     const skip = (page - 1) * limit;
 
-    const totalLanguages = await Language.countDocuments(filter);
-    const languages = await Language.find(filter).sort(sortCriteria).skip(skip).limit(limit);
+    const [totalElements, languages] = await Promise.all([
+      Language.countDocuments(filter),
+      Language.find(filter).sort(sortCriteria).skip(skip).limit(limit),
+    ]);
 
     res.status(200).json({
       status: true,
       message: 'Languages fetched successfully.',
       data: {
         languages,
-        totalLanguages,
-        page,
-        limit,
-        totalPages: Math.ceil(totalLanguages / limit),
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
       },
     });
   } catch (error) {

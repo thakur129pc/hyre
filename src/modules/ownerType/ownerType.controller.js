@@ -224,6 +224,7 @@ export const deleteOwnerType = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'Owner type deleted successfully.',
+      data: null,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -234,11 +235,18 @@ export const deleteOwnerType = async (req, res, next) => {
 
 /**
  * Get Owner Types
- * Accessible to authenticated users. Supports pagination, filters, and sorting.
+ * Accessible to authenticated users. Supports search, pagination, filters, and sorting.
  */
 export const getOwnerTypes = async (req, res, next) => {
   try {
-    const { status = 'all', sortBy = 'title', sortOrder = 'asc', page = 1, limit = 20 } = req.body;
+    const {
+      search = '',
+      status = 'all',
+      sortBy = 'title',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 20,
+    } = req.body;
 
     const filter = {};
 
@@ -251,6 +259,13 @@ export const getOwnerTypes = async (req, res, next) => {
       }
     }
 
+    // Search by title
+    if (search && search.trim()) {
+      filter.title = {
+        $regex: new RegExp(search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'),
+      };
+    }
+
     // Sorting
     const sortCriteria = {};
     sortCriteria[sortBy] = sortOrder === 'desc' ? -1 : 1;
@@ -258,18 +273,22 @@ export const getOwnerTypes = async (req, res, next) => {
     // Pagination
     const skip = (page - 1) * limit;
 
-    const totalOwnerTypes = await OwnerType.countDocuments(filter);
-    const ownerTypes = await OwnerType.find(filter).sort(sortCriteria).skip(skip).limit(limit);
+    const [totalElements, ownerTypes] = await Promise.all([
+      OwnerType.countDocuments(filter),
+      OwnerType.find(filter).sort(sortCriteria).skip(skip).limit(limit),
+    ]);
 
     res.status(200).json({
       status: true,
       message: 'Owner types fetched successfully.',
       data: {
         ownerTypes,
-        totalOwnerTypes,
-        page,
-        limit,
-        totalPages: Math.ceil(totalOwnerTypes / limit),
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
       },
     });
   } catch (error) {

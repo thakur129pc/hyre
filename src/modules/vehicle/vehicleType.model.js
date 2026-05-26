@@ -42,6 +42,7 @@ const vehicleTypeSchema = new mongoose.Schema(
 
 // Index for query speed on active status and name lookup
 vehicleTypeSchema.index({ typeName: 1, status: 1 });
+vehicleTypeSchema.index({ createdAt: -1 });
 
 const VehicleType = mongoose.model('VehicleType', vehicleTypeSchema);
 

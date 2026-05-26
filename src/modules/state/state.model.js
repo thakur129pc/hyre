@@ -70,6 +70,8 @@ stateSchema.index({ stateCode: 1, country: 1 }, { unique: true });
 stateSchema.index({ stateName: 1, country: 1 });
 stateSchema.index({ country: 1, status: 1 });
 stateSchema.index({ status: 1 });
+stateSchema.index({ stateName: 1 });
+stateSchema.index({ createdAt: -1 });
 
 const State = mongoose.model('State', stateSchema);
 

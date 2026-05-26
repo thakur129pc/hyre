@@ -58,9 +58,12 @@ export const languageCodeParamSchema = Joi.object({
 });
 
 export const queryLanguagesSchema = Joi.object({
+  search: Joi.string().trim().max(100).allow('').optional(),
   status: Joi.string().valid('active', 'inactive', 'all').optional().default('all'),
+  isRTL: Joi.boolean().optional(),
+  isDefault: Joi.boolean().optional(),
   sortBy: Joi.string()
-    .valid('languageName', 'languageNameInEnglish', 'languageCode')
+    .valid('languageName', 'languageNameInEnglish', 'languageCode', 'createdAt')
     .optional()
     .default('languageName'),
   sortOrder: Joi.string().valid('asc', 'desc').optional().default('asc'),

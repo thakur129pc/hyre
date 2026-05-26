@@ -272,14 +272,57 @@ export const addVehicle = async (req, res, next) => {
 
 /**
  * Fetch All Vehicle Types
+ * Supports search, sorting, filtering, and pagination.
  */
 export const getVehicleTypes = async (req, res, next) => {
   try {
-    const types = await VehicleType.find().sort({ typeName: 1 });
+    const {
+      search = '',
+      status = 'all',
+      sortBy = 'typeName',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 20,
+    } = req.body;
+
+    const filter = {};
+
+    // Security check: non-admins are restricted to active vehicle types
+    if (req.userType !== 'Admin') {
+      filter.status = 'active';
+    } else {
+      if (status && status !== 'all') {
+        filter.status = status;
+      }
+    }
+
+    // Search by typeName (case-insensitive substring)
+    if (search && search.trim()) {
+      filter.typeName = {
+        $regex: new RegExp(search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'),
+      };
+    }
+
+    const sortCriteria = {};
+    sortCriteria[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const skip = (page - 1) * limit;
+
+    const [totalElements, vehicleTypes] = await Promise.all([
+      VehicleType.countDocuments(filter),
+      VehicleType.find(filter).sort(sortCriteria).skip(skip).limit(limit),
+    ]);
+
     res.status(200).json({
       status: true,
       message: 'Vehicle types fetched successfully.',
-      data: types,
+      data: { vehicleTypes },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
+      },
     });
   } catch (error) {
     next(error);
@@ -288,16 +331,62 @@ export const getVehicleTypes = async (req, res, next) => {
 
 /**
  * Fetch Vehicle Sub Types with respect to Type ID
+ * Supports optional typeId, search, sorting, filtering, and pagination.
  */
 export const getVehicleSubTypes = async (req, res, next) => {
   try {
-    const { typeId } = req.body;
+    const {
+      typeId,
+      search = '',
+      status = 'all',
+      sortBy = 'subTypeName',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 20,
+    } = req.body;
 
-    const subTypes = await VehicleSubType.find({ typeId }).sort({ subTypeName: 1 });
+    const filter = {};
+
+    if (typeId) {
+      filter.typeId = typeId;
+    }
+
+    // Security check: non-admins are restricted to active vehicle subtypes
+    if (req.userType !== 'Admin') {
+      filter.status = 'active';
+    } else {
+      if (status && status !== 'all') {
+        filter.status = status;
+      }
+    }
+
+    // Search by subTypeName (case-insensitive substring)
+    if (search && search.trim()) {
+      filter.subTypeName = {
+        $regex: new RegExp(search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'),
+      };
+    }
+
+    const sortCriteria = {};
+    sortCriteria[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const skip = (page - 1) * limit;
+
+    const [totalElements, vehicleSubTypes] = await Promise.all([
+      VehicleSubType.countDocuments(filter),
+      VehicleSubType.find(filter).populate('typeId').sort(sortCriteria).skip(skip).limit(limit),
+    ]);
+
     res.status(200).json({
       status: true,
       message: 'Vehicle subtypes fetched successfully.',
-      data: subTypes,
+      data: { vehicleSubTypes },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
+      },
     });
   } catch (error) {
     next(error);
@@ -305,25 +394,68 @@ export const getVehicleSubTypes = async (req, res, next) => {
 };
 
 /**
- * Fetch Vehicles with filters (vehicleTypeId, status)
+ * Fetch Vehicles with filters (vehicleTypeId, vehicleSubTypeId, category, status), search, sorting, and pagination
  */
 export const getVehicles = async (req, res, next) => {
   try {
-    const { vehicleTypeId, status } = req.body;
-    const query = {};
+    const {
+      vehicleTypeId,
+      vehicleSubTypeId,
+      category = 'all',
+      search = '',
+      status = 'all',
+      sortBy = 'title',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 20,
+    } = req.body;
 
-    if (vehicleTypeId) query.vehicleTypeId = vehicleTypeId;
-    if (status) query.status = status;
+    const filter = {};
 
-    const vehicles = await Vehicle.find(query)
-      .populate('vehicleTypeId')
-      .populate('vehicleSubTypeId')
-      .sort({ createdAt: -1 });
+    if (vehicleTypeId) filter.vehicleTypeId = vehicleTypeId;
+    if (vehicleSubTypeId) filter.vehicleSubTypeId = vehicleSubTypeId;
+    if (category && category !== 'all') filter.category = category;
+
+    // Security check: non-admins are restricted to active vehicles
+    if (req.userType !== 'Admin') {
+      filter.status = 'active';
+    } else {
+      if (status && status !== 'all') {
+        filter.status = status;
+      }
+    }
+
+    // Search by title or description (case-insensitive substring)
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i');
+      filter.$or = [{ title: searchRegex }, { description: searchRegex }];
+    }
+
+    const sortCriteria = {};
+    sortCriteria[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const skip = (page - 1) * limit;
+
+    const [totalElements, vehicles] = await Promise.all([
+      Vehicle.countDocuments(filter),
+      Vehicle.find(filter)
+        .populate('vehicleTypeId')
+        .populate('vehicleSubTypeId')
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(limit),
+    ]);
 
     res.status(200).json({
       status: true,
       message: 'Vehicles catalog fetched successfully.',
-      data: vehicles,
+      data: { vehicles },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
+      },
     });
   } catch (error) {
     next(error);

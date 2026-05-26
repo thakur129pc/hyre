@@ -3,6 +3,7 @@ import validate from '../../middlewares/validate.middleware.js';
 import { authenticateJWT, authorizeRoles } from '../../middlewares/auth.middleware.js';
 import { createUploadMiddleware } from '../../middlewares/upload.middleware.js';
 import verifyHmac from '../../middlewares/verifyHmac.middleware.js';
+import { sanitizationMiddleware } from '../../middlewares/sanitization.middleware.js';
 import {
   createCitySchema,
   editCitySchema,
@@ -75,8 +76,9 @@ router.post(
   authorizeRoles('super_admin'),
   upload.single('icon'),
   validateUpload,
-  // verifyHmac,
+  verifyHmac,
   parseCityMultipartFields,
+  sanitizationMiddleware,
   validate({ body: createCitySchema }),
   createCity
 );
@@ -87,8 +89,9 @@ router.post(
   authorizeRoles('super_admin'),
   upload.single('icon'),
   validateUpload,
-  // verifyHmac,
+  verifyHmac,
   parseCityMultipartFields,
+  sanitizationMiddleware,
   validate({ params: cityParamSchema, body: editCitySchema }),
   editCity
 );

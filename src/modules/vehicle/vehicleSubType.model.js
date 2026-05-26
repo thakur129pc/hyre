@@ -49,6 +49,8 @@ vehicleSubTypeSchema.index({ typeId: 1, subTypeName: 1 }, { unique: true });
 
 // Basic index for quick searches on subTypeName lookup and status
 vehicleSubTypeSchema.index({ subTypeName: 1, status: 1 });
+vehicleSubTypeSchema.index({ status: 1 });
+vehicleSubTypeSchema.index({ createdAt: -1 });
 
 const VehicleSubType = mongoose.model('VehicleSubType', vehicleSubTypeSchema);
 

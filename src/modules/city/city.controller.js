@@ -356,26 +356,64 @@ export const toggleCityStatus = async (req, res, next) => {
 
 /**
  * Fetch Cities API
- * Filters by state (case-insensitive regex) and status.
+ * Supports search by name, filter by state/status, sorting, and full pagination.
  */
 export const getCities = async (req, res, next) => {
   try {
-    const { state, status } = req.body;
-    const query = {};
+    const {
+      search = '',
+      state = '',
+      status = 'all',
+      sortBy = 'name',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 20,
+    } = req.body;
 
-    if (state) {
-      query.state = { $regex: new RegExp(escapeRegex(state.trim()), 'i') };
-    }
-    if (status) {
-      query.status = status;
+    const filter = {};
+
+    // Non-admins only see active cities
+    if (req.userType !== 'Admin') {
+      filter.status = 'active';
+    } else {
+      if (status && status !== 'all') {
+        filter.status = status;
+      }
     }
 
-    const cities = await City.find(query).sort({ name: 1 });
+    // Filter by state (case-insensitive)
+    if (state && state.trim()) {
+      filter.state = { $regex: new RegExp(escapeRegex(state.trim()), 'i') };
+    }
+
+    // Search by city name
+    if (search && search.trim()) {
+      filter.name = { $regex: new RegExp(escapeRegex(search.trim()), 'i') };
+    }
+
+    const validSortFields = { name: 1, state: 1, status: 1, createdAt: 1 };
+    const sortField = sortBy in validSortFields ? sortBy : 'name';
+    const sortCriteria = { [sortField]: sortOrder === 'desc' ? -1 : 1 };
+
+    const skip = (page - 1) * limit;
+
+    const [totalElements, cities] = await Promise.all([
+      City.countDocuments(filter),
+      City.find(filter).sort(sortCriteria).skip(skip).limit(limit),
+    ]);
 
     res.status(200).json({
       status: true,
       message: 'Cities fetched successfully.',
-      data: cities,
+      data: {
+        cities,
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
+      },
     });
   } catch (error) {
     next(error);

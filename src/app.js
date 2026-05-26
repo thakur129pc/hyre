@@ -120,17 +120,17 @@ sensitiveApis.forEach((api) => {
 });
 
 // HMAC Payload Integrity & Replay Verification
-// app.use((req, res, next) => {
-//   // Skip static uploads and health check
-//   if (req.url.startsWith('/uploads') || req.url.includes('/health')) return next();
-//   // Skip multipart/form-data requests globally (handled locally on routes after Multer parses fields)
-//   if (req.is('multipart/form-data')) return next();
-//   // Skip admin and logs utility routes
-//   if (req.url.includes('/admin') || req.url.includes('/logs')) return next();
+app.use((req, res, next) => {
+  // Skip static uploads and health check
+  if (req.url.startsWith('/uploads') || req.url.includes('/health')) return next();
+  // Skip multipart/form-data requests globally (handled locally on routes after Multer parses fields)
+  if (req.is('multipart/form-data')) return next();
+  // Skip admin and logs utility routes
+  if (req.url.includes('/admin') || req.url.includes('/logs')) return next();
 
-//   // Default: Require HMAC + Timestamp for other routes
-//   return verifyHmac(req, res, next);
-// });
+  // Default: Require HMAC + Timestamp for other routes
+  return verifyHmac(req, res, next);
+});
 
 // User IP details middleware
 app.use(userInfoMiddleware);

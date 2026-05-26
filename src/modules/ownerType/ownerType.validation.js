@@ -18,6 +18,7 @@ export const editOwnerTypeSchema = Joi.object({
 });
 
 export const queryOwnerTypesSchema = Joi.object({
+  search: Joi.string().trim().max(100).allow('').optional(),
   status: Joi.string().valid('active', 'inactive', 'all').optional().default('all').messages({
     'any.only': 'Status filter must be active, inactive, or all.',
   }),
@@ -29,8 +30,8 @@ export const queryOwnerTypesSchema = Joi.object({
 
 export const ownerTypeParamSchema = Joi.object({
   id: Joi.string().hex().length(24).required().messages({
-    'string.hex': 'Invalid Owner Type ID format in URL.',
-    'string.length': 'Invalid Owner Type ID format in URL.',
-    'any.required': 'Owner Type ID is required in URL.',
+    'string.hex': 'Invalid Owner Type ID format.',
+    'string.length': 'Invalid Owner Type ID format.',
+    'any.required': 'Owner Type ID is required.',
   }),
 });

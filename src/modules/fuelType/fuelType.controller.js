@@ -224,6 +224,7 @@ export const deleteFuelType = async (req, res, next) => {
     res.status(200).json({
       status: true,
       message: 'Fuel type deleted successfully.',
+      data: null,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -234,11 +235,18 @@ export const deleteFuelType = async (req, res, next) => {
 
 /**
  * Get Fuel Types
- * Accessible to authenticated users. Supports pagination, filters, and sorting.
+ * Accessible to authenticated users. Supports search, pagination, filters, and sorting.
  */
 export const getFuelTypes = async (req, res, next) => {
   try {
-    const { status = 'all', sortBy = 'title', sortOrder = 'asc', page = 1, limit = 20 } = req.body;
+    const {
+      search = '',
+      status = 'all',
+      sortBy = 'title',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 20,
+    } = req.body;
 
     const filter = {};
 
@@ -251,6 +259,13 @@ export const getFuelTypes = async (req, res, next) => {
       }
     }
 
+    // Search by title
+    if (search && search.trim()) {
+      filter.title = {
+        $regex: new RegExp(search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'),
+      };
+    }
+
     // Sorting
     const sortCriteria = {};
     sortCriteria[sortBy] = sortOrder === 'desc' ? -1 : 1;
@@ -258,18 +273,22 @@ export const getFuelTypes = async (req, res, next) => {
     // Pagination
     const skip = (page - 1) * limit;
 
-    const totalFuelTypes = await FuelType.countDocuments(filter);
-    const fuelTypes = await FuelType.find(filter).sort(sortCriteria).skip(skip).limit(limit);
+    const [totalElements, fuelTypes] = await Promise.all([
+      FuelType.countDocuments(filter),
+      FuelType.find(filter).sort(sortCriteria).skip(skip).limit(limit),
+    ]);
 
     res.status(200).json({
       status: true,
       message: 'Fuel types fetched successfully.',
       data: {
         fuelTypes,
-        totalFuelTypes,
-        page,
-        limit,
-        totalPages: Math.ceil(totalFuelTypes / limit),
+      },
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalElements / limit),
+        limitPerPage: limit,
+        totalElements,
       },
     });
   } catch (error) {
